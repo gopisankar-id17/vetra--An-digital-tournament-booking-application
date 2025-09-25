@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "589976622977",
+    "project_id": "vetra-20540",
+    "storage_bucket": "vetra-20540.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:589976622977:android:48bfd53d492b23d1f33a80",
+        "android_client_info": {
+          "package_name": "com.example.vetra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAH7aE4MOg6cd6gw9TucmEGC3ku7okdKTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
