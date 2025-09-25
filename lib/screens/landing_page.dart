@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'admin/admin_login_page.dart';
+import 'users/user_login_page.dart';
+import 'users/user_signup_page.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -138,11 +141,9 @@ class _LandingPageState extends State<LandingPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to admin login - for now just show a message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Admin login will be implemented'),
-                      ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AdminLoginPage()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -228,11 +229,9 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        // Navigate to user login - for now just show a message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('User login will be implemented'),
-                          ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const UserLoginPage()),
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -256,11 +255,9 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navigate to user signup - for now just show a message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('User signup will be implemented'),
-                          ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const UserSignupPage()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
