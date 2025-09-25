@@ -47,9 +47,6 @@ class AppTheme {
         foregroundColor: Colors.white,
         centerTitle: true,
         toolbarHeight: 70,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
       ),
 
       // Card theme

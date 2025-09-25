@@ -129,7 +129,7 @@ class BookingCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Amount: \$${booking.amountPaid.toStringAsFixed(2)}',
+                    'Amount: ₹${booking.amountPaid.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppTheme.textMediumColor,
                       fontWeight: FontWeight.w500,

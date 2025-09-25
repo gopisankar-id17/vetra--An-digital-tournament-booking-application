@@ -6,6 +6,7 @@ import '../../models/notification.dart' as model;
 import '../../utils/app_theme.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/tournament_card.dart';
+import '../../widgets/tournament_carousel.dart';
 import '../../widgets/booking_card.dart';
 import '../../widgets/notification_card.dart';
 import '../../widgets/profile_card.dart';
@@ -282,61 +283,64 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
             const SizedBox(height: 24),
 
-            // Upcoming tournaments section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Upcoming Tournaments',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDarkColor,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedIndex = 1;
-                    });
-                  },
-                  child: const Text('View All'),
-                ),
-              ],
+            // Upcoming tournaments carousel
+            TournamentCarousel(
+              tournaments: upcomingTournaments,
+              title: 'Upcoming Tournaments',
+              onViewAll: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+              onTournamentTap: (tournament) {
+                // Show tournament details
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('View details of ${tournament.name}')),
+                );
+              },
             ),
-            const SizedBox(height: 8),
 
-            if (upcomingTournaments.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'No upcoming tournaments',
-                    style: TextStyle(color: AppTheme.textMediumColor),
-                  ),
-                ),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: upcomingTournaments.length.clamp(0, 2),
-                itemBuilder: (context, index) {
-                  return TournamentCard(
-                    tournament: upcomingTournaments[index],
-                    onTap: () {
-                      // Show tournament details
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'View details of ${upcomingTournaments[index].name}',
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+            const SizedBox(height: 24),
+
+            // Ongoing tournaments carousel
+            TournamentCarousel(
+              tournaments: _tournaments
+                  .where((t) => t.status == TournamentStatus.ongoing)
+                  .toList(),
+              title: 'Ongoing Tournaments',
+              onViewAll: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+              onTournamentTap: (tournament) {
+                // Show tournament details
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('View details of ${tournament.name}')),
+                );
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Completed tournaments carousel
+            TournamentCarousel(
+              tournaments: _tournaments
+                  .where((t) => t.status == TournamentStatus.completed)
+                  .toList(),
+              title: 'Completed Tournaments',
+              onViewAll: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+              onTournamentTap: (tournament) {
+                // Show tournament details
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('View details of ${tournament.name}')),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -393,42 +397,58 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12), // Reduced padding
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Added to prevent overflow
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6), // Reduced padding
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: color, size: 20),
+                      child: Icon(
+                        icon,
+                        color: color,
+                        size: 18,
+                      ), // Reduced icon size
                     ),
                     const Spacer(),
                     const Icon(
                       Icons.arrow_forward_ios,
-                      size: 16,
+                      size: 14, // Reduced icon size
                       color: AppTheme.textMediumColor,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                const SizedBox(height: 8), // Reduced spacing
+                Flexible(
+                  // Made text flexible
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 20, // Reduced font size
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textMediumColor,
+                const SizedBox(height: 2),
+                Flexible(
+                  // Made text flexible
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12, // Reduced font size
+                      color: AppTheme.textMediumColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

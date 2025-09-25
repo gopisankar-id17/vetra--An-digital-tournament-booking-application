@@ -245,6 +245,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       mainAxisSpacing: 16,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.1, // Adjust aspect ratio to prevent overflow
       children: [
         _buildStatCard(
           title: 'Tournaments',
@@ -260,7 +261,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         _buildStatCard(
           title: 'Revenue',
-          value: '\$3,450',
+          value: '₹1,50,000',
           icon: Icons.attach_money,
           color: AppTheme.successColor,
         ),
@@ -284,33 +285,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12), // Reduced padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center, // Changed to center
+          mainAxisSize: MainAxisSize.min, // Added to prevent overflow
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6), // Reduced padding
               decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 20), // Reduced icon size
             ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: color,
+            const SizedBox(height: 8), // Reduced spacing
+            Flexible(
+              // Made text flexible to prevent overflow
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 24, // Reduced font size
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppTheme.textMediumColor,
+            const SizedBox(height: 2),
+            Flexible(
+              // Made text flexible to prevent overflow
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12, // Reduced font size
+                  color: AppTheme.textMediumColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

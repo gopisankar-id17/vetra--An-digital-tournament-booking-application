@@ -160,7 +160,7 @@ class TournamentCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '\$${tournament.entryFee.toStringAsFixed(2)}',
+                          '₹${tournament.entryFee.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: AppTheme.primaryDarkColor,
                             fontWeight: FontWeight.bold,

@@ -35,7 +35,7 @@ class Booking {
         userName: 'John Doe',
         bookingDate: DateTime.now().subtract(const Duration(days: 5)),
         status: BookingStatus.confirmed,
-        amountPaid: 25.0,
+        amountPaid: 2500.0,
         receiptId: 'RCPT-001',
       ),
       Booking(
@@ -46,7 +46,7 @@ class Booking {
         userName: 'John Doe',
         bookingDate: DateTime.now().subtract(const Duration(days: 10)),
         status: BookingStatus.active,
-        amountPaid: 50.0,
+        amountPaid: 5000.0,
         receiptId: 'RCPT-002',
       ),
       Booking(
@@ -57,7 +57,7 @@ class Booking {
         userName: 'John Doe',
         bookingDate: DateTime.now().subtract(const Duration(days: 35)),
         status: BookingStatus.completed,
-        amountPaid: 75.0,
+        amountPaid: 7500.0,
         receiptId: 'RCPT-003',
         notes: 'Reached quarterfinals',
       ),
