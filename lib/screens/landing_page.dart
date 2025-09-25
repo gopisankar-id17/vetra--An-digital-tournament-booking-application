@@ -87,9 +87,7 @@ class _LandingPageState extends State<LandingPage> {
       constraints: const BoxConstraints(maxWidth: 350),
       child: Card(
         elevation: 20,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -138,12 +136,8 @@ class _LandingPageState extends State<LandingPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to admin login - for now just show a message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Admin login will be implemented'),
-                      ),
-                    );
+                    // Navigate to admin dashboard
+                    Navigator.pushNamed(context, '/admin');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF563691),
@@ -156,10 +150,7 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                   child: const Text(
                     'Admin Login',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -176,9 +167,7 @@ class _LandingPageState extends State<LandingPage> {
       constraints: const BoxConstraints(maxWidth: 350),
       child: Card(
         elevation: 20,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -228,16 +217,15 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        // Navigate to user login - for now just show a message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('User login will be implemented'),
-                          ),
-                        );
+                        // Navigate to user dashboard
+                        Navigator.pushNamed(context, '/user');
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF94c142),
-                        side: const BorderSide(color: Color(0xFF94c142), width: 2),
+                        side: const BorderSide(
+                          color: Color(0xFF94c142),
+                          width: 2,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),

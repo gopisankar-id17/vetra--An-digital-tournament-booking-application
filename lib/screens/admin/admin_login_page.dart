@@ -14,7 +14,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   final _otpController = TextEditingController(); // New controller for OTP
   bool _isLoading = false;
   bool _otpSent = false; // New state variable to control UI
-  String _verificationId = ''; // New state variable to store the verification ID
+  String _verificationId =
+      ''; // New state variable to store the verification ID
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
@@ -39,7 +40,9 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
             if (mounted) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const AdminDashboard()), // TODO: Create AdminDashboard
+                MaterialPageRoute(
+                  builder: (context) => const AdminDashboard(),
+                ), // TODO: Create AdminDashboard
               );
             }
           },
@@ -49,7 +52,9 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(e.message ?? 'An error occurred during verification.'),
+                content: Text(
+                  e.message ?? 'An error occurred during verification.',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -99,11 +104,13 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
         );
 
         await _auth.signInWithCredential(credential);
-        
+
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminDashboard()), // TODO: Create AdminDashboard
+            MaterialPageRoute(
+              builder: (context) => const AdminDashboard(),
+            ), // TODO: Create AdminDashboard
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -128,10 +135,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE74C3C),
-              Color(0xFFC0392B),
-            ],
+            colors: [Color(0xFFE74C3C), Color(0xFFC0392B)],
           ),
         ),
         child: SafeArea(
@@ -181,7 +185,9 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE74C3C).withOpacity(0.1),
+                                  color: const Color(
+                                    0xFFE74C3C,
+                                  ).withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -218,13 +224,20 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                       controller: _phoneController,
                                       keyboardType: TextInputType.phone,
                                       decoration: InputDecoration(
-                                        labelText: 'Phone Number (with country code)',
-                                        prefixIcon: const Icon(Icons.phone_outlined),
+                                        labelText:
+                                            'Phone Number (with country code)',
+                                        prefixIcon: const Icon(
+                                          Icons.phone_outlined,
+                                        ),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius: BorderRadius.circular(
+                                            15,
+                                          ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius: BorderRadius.circular(
+                                            15,
+                                          ),
                                           borderSide: const BorderSide(
                                             color: Color(0xFFE74C3C),
                                             width: 2,
@@ -249,10 +262,14 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                         decoration: InputDecoration(
                                           labelText: 'Verification Code',
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
                                             borderSide: const BorderSide(
                                               color: Color(0xFFE74C3C),
                                               width: 2,
@@ -260,7 +277,9 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                           ),
                                         ),
                                         validator: (value) {
-                                          if (value == null || value.isEmpty || value.length != 6) {
+                                          if (value == null ||
+                                              value.isEmpty ||
+                                              value.length != 6) {
                                             return 'Please enter a valid 6-digit code';
                                           }
                                           return null;
@@ -273,13 +292,21 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                       child: ElevatedButton(
                                         onPressed: _isLoading
                                             ? null
-                                            : (_otpSent ? _verifyOtp : _handleLogin),
+                                            : (_otpSent
+                                                  ? _verifyOtp
+                                                  : _handleLogin),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFE74C3C),
+                                          backgroundColor: const Color(
+                                            0xFFE74C3C,
+                                          ),
                                           foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 15),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 15,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(15),
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
                                           ),
                                           elevation: 5,
                                         ),
@@ -287,13 +314,16 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                             ? const SizedBox(
                                                 height: 20,
                                                 width: 20,
-                                                child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
                                               )
                                             : Text(
-                                                _otpSent ? 'Verify Code' : 'Login as Admin',
+                                                _otpSent
+                                                    ? 'Verify Code'
+                                                    : 'Login as Admin',
                                                 style: const TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
