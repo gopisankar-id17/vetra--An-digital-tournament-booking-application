@@ -46,21 +46,52 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         },
       ),
       body: _buildBody(),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        selectedItemColor: AppTheme.primaryColor,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        elevation: 10,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events),
+            label: 'Tournaments',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.book_online),
+            label: 'Bookings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: 'Notifications',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
       floatingActionButton: _selectedIndex == 0 || _selectedIndex == 1
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _selectedIndex == 0
-                          ? 'Add new dashboard item'
-                          : 'Create new tournament',
-                    ),
-                  ),
-                );
+                if (_selectedIndex == 1) {
+                  _showCreateTournamentDialog(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Add new dashboard item')),
+                  );
+                }
               },
               backgroundColor: AppTheme.primaryColor,
-              child: const Icon(Icons.add),
+              icon: const Icon(Icons.add),
+              label: Text(_selectedIndex == 1 ? 'New Tournament' : 'Add Item'),
             )
           : null,
     );
@@ -77,15 +108,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 3:
         return 'Notifications';
       case 4:
-        return 'Manage Users';
-      case 5:
-        return 'Analytics';
-      case 6:
-        return 'Reports';
-      case 7:
         return 'Profile';
-      case 8:
-        return 'Settings';
       default:
         return 'Admin Dashboard';
     }
@@ -99,7 +122,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return _buildTournamentsContent();
       case 2:
         return _buildBookingsContent();
-      case 7:
+      case 3:
+        return _buildNotificationsContent();
+      case 4:
         return _buildProfileContent();
       default:
         return Center(
@@ -336,30 +361,277 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final tournaments = Tournament.getSampleTournaments();
 
     return tournaments.isEmpty
-        ? const Center(
-            child: Text(
-              'No tournaments available',
-              style: TextStyle(fontSize: 18, color: AppTheme.textMediumColor),
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    size: 64,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'No tournaments yet',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textDarkColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Create your first tournament to get started',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.textMediumColor,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () => _showCreateTournamentDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    'Create Tournament',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
             ),
           )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: tournaments.length,
-            itemBuilder: (context, index) {
-              return TournamentCard(
-                tournament: tournaments[index],
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Manage tournament: ${tournaments[index].name}',
-                      ),
+        : Column(
+            children: [
+              // Header with stats
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  );
-                },
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatColumn(
+                      'Total',
+                      tournaments.length.toString(),
+                      Icons.emoji_events,
+                      AppTheme.primaryColor,
+                    ),
+                    _buildStatColumn(
+                      'Upcoming',
+                      tournaments
+                          .where((t) => t.status == TournamentStatus.upcoming)
+                          .length
+                          .toString(),
+                      Icons.schedule,
+                      Colors.blue,
+                    ),
+                    _buildStatColumn(
+                      'Ongoing',
+                      tournaments
+                          .where((t) => t.status == TournamentStatus.ongoing)
+                          .length
+                          .toString(),
+                      Icons.play_arrow,
+                      Colors.green,
+                    ),
+                    _buildStatColumn(
+                      'Completed',
+                      tournaments
+                          .where((t) => t.status == TournamentStatus.completed)
+                          .length
+                          .toString(),
+                      Icons.check_circle,
+                      Colors.grey,
+                    ),
+                  ],
+                ),
+              ),
+              // Tournament list
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: tournaments.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: TournamentCard(
+                        tournament: tournaments[index],
+                        onTap: () {
+                          _showTournamentManageDialog(
+                            context,
+                            tournaments[index],
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+  }
+
+  Widget _buildStatColumn(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDarkColor,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppTheme.textMediumColor),
+        ),
+      ],
+    );
+  }
+
+  void _showTournamentManageDialog(
+    BuildContext context,
+    Tournament tournament,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Manage: ${tournament.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppTheme.primaryColor),
+              title: const Text('Edit Tournament'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Edit tournament feature coming soon'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.people, color: Colors.blue),
+              title: const Text('View Participants'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Participants view coming soon'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bar_chart, color: Colors.green),
+              title: const Text('View Analytics'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Analytics view coming soon')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete Tournament'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation(context, tournament);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, Tournament tournament) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Tournament'),
+        content: Text(
+          'Are you sure you want to delete "${tournament.name}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Tournament "${tournament.name}" deleted successfully',
+                  ),
+                  backgroundColor: AppTheme.successColor,
+                ),
               );
             },
-          );
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBookingsContent() {
@@ -390,6 +662,141 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               );
             },
           );
+  }
+
+  Widget _buildNotificationsContent() {
+    final notifications = [
+      {
+        'title': 'New Tournament Registration',
+        'message': 'John Doe registered for Basketball Championship 2025',
+        'time': '2 minutes ago',
+        'type': 'registration',
+      },
+      {
+        'title': 'Tournament Full',
+        'message': 'Chess Tournament 2025 has reached maximum capacity',
+        'time': '1 hour ago',
+        'type': 'alert',
+      },
+      {
+        'title': 'Payment Received',
+        'message': 'Payment of ₹500 received from Sarah Smith',
+        'time': '3 hours ago',
+        'type': 'payment',
+      },
+      {
+        'title': 'Tournament Starting Soon',
+        'message': 'Gaming Tournament starts in 30 minutes',
+        'time': '5 hours ago',
+        'type': 'reminder',
+      },
+    ];
+
+    return notifications.isEmpty
+        ? const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.notifications_none, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'No notifications yet',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              ],
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final notification = notifications[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: _getNotificationColor(
+                      notification['type']!,
+                    ),
+                    child: Icon(
+                      _getNotificationIcon(notification['type']!),
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    notification['title']!,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(
+                        notification['message']!,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        notification['time']!,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {
+                      // Show notification options
+                    },
+                  ),
+                  onTap: () {
+                    // Handle notification tap
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Notification: ${notification['title']}'),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+  }
+
+  Color _getNotificationColor(String type) {
+    switch (type) {
+      case 'registration':
+        return Colors.blue;
+      case 'alert':
+        return Colors.orange;
+      case 'payment':
+        return Colors.green;
+      case 'reminder':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getNotificationIcon(String type) {
+    switch (type) {
+      case 'registration':
+        return Icons.person_add;
+      case 'alert':
+        return Icons.warning;
+      case 'payment':
+        return Icons.payment;
+      case 'reminder':
+        return Icons.schedule;
+      default:
+        return Icons.notifications;
+    }
   }
 
   Widget _buildProfileContent() {
@@ -538,5 +945,609 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       ),
     );
+  }
+
+  void _showCreateTournamentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const CreateTournamentDialog(),
+    );
+  }
+}
+
+class CreateTournamentDialog extends StatefulWidget {
+  const CreateTournamentDialog({Key? key}) : super(key: key);
+
+  @override
+  State<CreateTournamentDialog> createState() => _CreateTournamentDialogState();
+}
+
+class _CreateTournamentDialogState extends State<CreateTournamentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _entryFeeController = TextEditingController();
+  final _maxParticipantsController = TextEditingController();
+  final _imageUrlController = TextEditingController();
+
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 10, minute: 0);
+  TournamentStatus _selectedStatus = TournamentStatus.upcoming;
+  String _selectedCategory = 'General';
+  int _durationHours = 8;
+
+  final List<String> _categories = [
+    'General',
+    'Gaming',
+    'Sports',
+    'E-sports',
+    'Chess',
+    'Quiz',
+    'Debate',
+    'Art & Craft',
+    'Music',
+    'Dance',
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _entryFeeController.dispose();
+    _maxParticipantsController.dispose();
+    _imageUrlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.85,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: AppTheme.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Text(
+                    'Create New Tournament',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDarkColor,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Form
+            Expanded(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // Tournament Name
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Tournament Name',
+                          prefixIcon: const Icon(Icons.emoji_events),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter tournament name';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Description
+                      TextFormField(
+                        controller: _descriptionController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: 'Description',
+                          prefixIcon: const Icon(Icons.description),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter tournament description';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Location
+                      TextFormField(
+                        controller: _locationController,
+                        decoration: InputDecoration(
+                          labelText: 'Location',
+                          prefixIcon: const Icon(Icons.location_on),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter tournament location';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Date and Time Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Date',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectTime(context),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Time',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Text(
+                                          _selectedTime.format(context),
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Entry Fee and Max Participants Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _entryFeeController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Entry Fee (₹)',
+                                prefixIcon: const Icon(Icons.currency_rupee),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Enter entry fee';
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return 'Enter valid amount';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _maxParticipantsController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Max Participants',
+                                prefixIcon: const Icon(Icons.people),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Enter max participants';
+                                }
+                                if (int.tryParse(value) == null) {
+                                  return 'Enter valid number';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Image URL
+                      TextFormField(
+                        controller: _imageUrlController,
+                        decoration: InputDecoration(
+                          labelText: 'Image URL (Optional)',
+                          prefixIcon: const Icon(Icons.image),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Status and Category Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<TournamentStatus>(
+                              value: _selectedStatus,
+                              decoration: InputDecoration(
+                                labelText: 'Status',
+                                prefixIcon: const Icon(Icons.info),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              items: TournamentStatus.values.map((status) {
+                                return DropdownMenuItem(
+                                  value: status,
+                                  child: Text(status.name.toUpperCase()),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedStatus = value!;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedCategory,
+                              decoration: InputDecoration(
+                                labelText: 'Category',
+                                prefixIcon: const Icon(Icons.category),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              items: _categories.map((category) {
+                                return DropdownMenuItem(
+                                  value: category,
+                                  child: Text(category),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedCategory = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Duration
+                      TextFormField(
+                        initialValue: _durationHours.toString(),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Duration (Hours)',
+                          prefixIcon: const Icon(Icons.schedule),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter duration';
+                          }
+                          if (int.tryParse(value) == null ||
+                              int.parse(value) <= 0) {
+                            return 'Enter valid hours';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          if (int.tryParse(value) != null) {
+                            _durationHours = int.parse(value);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _createTournament,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text(
+                      'Create Tournament',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  void _createTournament() {
+    if (_formKey.currentState!.validate()) {
+      // Create tournament object
+      final startDateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+
+      final tournament = Tournament(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        location: _locationController.text.trim(),
+        startDate: startDateTime,
+        endDate: startDateTime.add(Duration(hours: _durationHours)),
+        organizerId: 'admin_1', // In a real app, get from current admin user
+        organizerName: 'Admin', // In a real app, get from current admin user
+        entryFee: double.parse(_entryFeeController.text.trim()),
+        maxParticipants: int.parse(_maxParticipantsController.text.trim()),
+        currentParticipants: 0,
+        status: _selectedStatus,
+        categories: [_selectedCategory],
+        imageUrl: _imageUrlController.text.trim().isEmpty
+            ? null
+            : _imageUrlController.text.trim(),
+      );
+
+      // Close dialog
+      Navigator.pop(context);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Tournament "${tournament.name}" created successfully!',
+          ),
+          backgroundColor: AppTheme.successColor,
+          action: SnackBarAction(
+            label: 'View',
+            textColor: Colors.white,
+            onPressed: () {
+              // In a real app, this would navigate to the tournament details
+            },
+          ),
+        ),
+      );
+
+      // In a real app, you would save this tournament to your database
+      // For now, we'll just show it was created successfully
+    }
   }
 }

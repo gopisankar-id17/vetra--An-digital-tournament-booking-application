@@ -150,6 +150,58 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
             const SizedBox(height: 24),
 
+            // Upcoming tournaments carousel - MOVED TO TOP
+            TournamentCarousel(
+              tournaments: upcomingTournaments,
+              title: 'Upcoming Tournaments',
+              onViewAll: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+              onTournamentTap: (tournament) {
+                _showTournamentDetails(context, tournament);
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Ongoing tournaments carousel
+            TournamentCarousel(
+              tournaments: _tournaments
+                  .where((t) => t.status == TournamentStatus.ongoing)
+                  .toList(),
+              title: 'Ongoing Tournaments',
+              onViewAll: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+              onTournamentTap: (tournament) {
+                _showTournamentDetails(context, tournament);
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Completed tournaments carousel
+            TournamentCarousel(
+              tournaments: _tournaments
+                  .where((t) => t.status == TournamentStatus.completed)
+                  .toList(),
+              title: 'Completed Tournaments',
+              onViewAll: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+              onTournamentTap: (tournament) {
+                _showTournamentDetails(context, tournament);
+              },
+            ),
+
+            const SizedBox(height: 24),
+
             // Quick stats cards
             _buildQuickStatsRow(),
 
@@ -280,68 +332,329 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   );
                 },
               ),
+          ],
+        ),
+      ),
+    );
+  }
 
-            const SizedBox(height: 24),
+  void _showTournamentDetails(BuildContext context, Tournament tournament) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Tournament Image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: SizedBox(
+                          height: 200,
+                          width: double.infinity,
+                          child: tournament.imageUrl != null
+                              ? Image.network(
+                                  tournament.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.2),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.emoji_events,
+                                            size: 60,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                )
+                              : Container(
+                                  color: AppTheme.primaryColor.withOpacity(0.2),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.emoji_events,
+                                      size: 60,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-            // Upcoming tournaments carousel
-            TournamentCarousel(
-              tournaments: upcomingTournaments,
-              title: 'Upcoming Tournaments',
-              onViewAll: () {
-                setState(() {
-                  _selectedIndex = 1;
-                });
-              },
-              onTournamentTap: (tournament) {
-                // Show tournament details
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('View details of ${tournament.name}')),
-                );
-              },
+                      // Tournament Name
+                      Text(
+                        tournament.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textDarkColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Status Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tournament.statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: tournament.statusColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          tournament.status.name.toUpperCase(),
+                          style: TextStyle(
+                            color: tournament.statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Details
+                      _buildDetailRow(
+                        Icons.location_on,
+                        'Location',
+                        tournament.location,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        Icons.calendar_today,
+                        'Date',
+                        '${tournament.startDate.day}/${tournament.startDate.month}/${tournament.startDate.year}',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        Icons.access_time,
+                        'Time',
+                        '${tournament.startDate.hour}:${tournament.startDate.minute.toString().padLeft(2, '0')}',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        Icons.currency_rupee,
+                        'Entry Fee',
+                        '₹${tournament.entryFee.toStringAsFixed(0)}',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        Icons.people,
+                        'Participants',
+                        '${tournament.currentParticipants}/${tournament.maxParticipants}',
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Description
+                      const Text(
+                        'Description',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textDarkColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        tournament.description,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.textMediumColor,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // Registration Button
+                      if (tournament.status == TournamentStatus.upcoming)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: tournament.availabilityPercentage < 1.0
+                                ? () => _showRegistrationDialog(
+                                    context,
+                                    tournament,
+                                  )
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  tournament.availabilityPercentage < 1.0
+                                  ? AppTheme.primaryColor
+                                  : Colors.grey,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: Text(
+                              tournament.availabilityPercentage < 1.0
+                                  ? 'Register Now - ₹${tournament.entryFee.toStringAsFixed(0)}'
+                                  : 'Tournament Full',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppTheme.primaryColor),
+        const SizedBox(width: 12),
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textDarkColor,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppTheme.textMediumColor,
             ),
+          ),
+        ),
+      ],
+    );
+  }
 
-            const SizedBox(height: 24),
-
-            // Ongoing tournaments carousel
-            TournamentCarousel(
-              tournaments: _tournaments
-                  .where((t) => t.status == TournamentStatus.ongoing)
-                  .toList(),
-              title: 'Ongoing Tournaments',
-              onViewAll: () {
-                setState(() {
-                  _selectedIndex = 1;
-                });
-              },
-              onTournamentTap: (tournament) {
-                // Show tournament details
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('View details of ${tournament.name}')),
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            // Completed tournaments carousel
-            TournamentCarousel(
-              tournaments: _tournaments
-                  .where((t) => t.status == TournamentStatus.completed)
-                  .toList(),
-              title: 'Completed Tournaments',
-              onViewAll: () {
-                setState(() {
-                  _selectedIndex = 1;
-                });
-              },
-              onTournamentTap: (tournament) {
-                // Show tournament details
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('View details of ${tournament.name}')),
-                );
-              },
+  void _showRegistrationDialog(BuildContext context, Tournament tournament) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Tournament Registration'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Do you want to register for "${tournament.name}"?'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Entry Fee:'),
+                      Text(
+                        '₹${tournament.entryFee.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Available Slots:'),
+                      Text(
+                        '${tournament.maxParticipants - tournament.currentParticipants}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.successColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Close the tournament details
+              _processRegistration(tournament);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Register'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _processRegistration(Tournament tournament) {
+    // Simulate registration process
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Registration successful for ${tournament.name}!'),
+        backgroundColor: AppTheme.successColor,
+        action: SnackBarAction(
+          label: 'View',
+          textColor: Colors.white,
+          onPressed: () {
+            setState(() {
+              _selectedIndex = 2; // Navigate to bookings
+            });
+          },
         ),
       ),
     );
