@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/auth_service.dart';
+import '../../models/user_model.dart';
+import 'user_dashboard.dart';
+import 'user_signup_page.dart';
 
-class AdminLoginPage extends StatefulWidget {
-  const AdminLoginPage({Key? key}) : super(key: key);
+class UserLoginPage extends StatefulWidget {
+  const UserLoginPage({Key? key}) : super(key: key);
 
   @override
-  State<AdminLoginPage> createState() => _AdminLoginPageState();
+  State<UserLoginPage> createState() => _UserLoginPageState();
 }
 
-class _AdminLoginPageState extends State<AdminLoginPage> {
+class _UserLoginPageState extends State<UserLoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _otpController = TextEditingController(); // New controller for OTP
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _otpSent = false; // New state variable to control UI
-  String _verificationId = ''; // New state variable to store the verification ID
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isPasswordVisible = false;
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _otpController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -31,91 +33,43 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       });
 
       try {
-        await _auth.verifyPhoneNumber(
-          phoneNumber: _phoneController.text.trim(),
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // Auto-retrieval on Android, sign the user in directly
-            await _auth.signInWithCredential(credential);
-            if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const AdminDashboard()), // TODO: Create AdminDashboard
-              );
-            }
-          },
-          verificationFailed: (FirebaseAuthException e) {
-            setState(() {
-              _isLoading = false;
-            });
+        final UserModel? user = await _authService.authenticateUser(
+          _phoneController.text.trim(),
+          _passwordController.text.trim(),
+        );
+
+        if (user != null) {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const UserDashboardPage()),
+            );
+          }
+        } else {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.message ?? 'An error occurred during verification.'),
+              const SnackBar(
+                content: Text('Invalid phone number or password. Please try again.'),
                 backgroundColor: Colors.red,
               ),
             );
-          },
-          codeSent: (String verificationId, int? resendToken) {
-            setState(() {
-              _verificationId = verificationId;
-              _otpSent = true;
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Verification code sent to your phone!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-          codeAutoRetrievalTimeout: (String verificationId) {
-            setState(() {
-              _isLoading = false;
-            });
-          },
-        );
+          }
+        }
       } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An unexpected error occurred. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _verifyOtp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      try {
-        final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-          verificationId: _verificationId,
-          smsCode: _otpController.text.trim(),
-        );
-
-        await _auth.signInWithCredential(credential);
-        
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminDashboard()), // TODO: Create AdminDashboard
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('An error occurred: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
-      } on FirebaseAuthException catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Invalid OTP. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -129,8 +83,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFE74C3C),
-              Color(0xFFC0392B),
+              Color(0xFF27AE60),
+              Color(0xFF2ECC71),
             ],
           ),
         ),
@@ -150,7 +104,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       ),
                     ),
                     const Text(
-                      'Admin Login',
+                      'User Login',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -177,22 +131,22 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Admin Icon
+                              // User Icon
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE74C3C).withOpacity(0.1),
+                                  color: const Color(0xFF27AE60).withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  Icons.admin_panel_settings,
+                                  Icons.person,
                                   size: 60,
-                                  color: Color(0xFFE74C3C),
+                                  color: Color(0xFF27AE60),
                                 ),
                               ),
                               const SizedBox(height: 30),
                               const Text(
-                                'Admin Portal',
+                                'Welcome Back',
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -201,7 +155,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                               ),
                               const SizedBox(height: 10),
                               const Text(
-                                'Sign in to manage tournaments',
+                                'Sign in to your account',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF7F8C8D),
@@ -218,7 +172,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                       controller: _phoneController,
                                       keyboardType: TextInputType.phone,
                                       decoration: InputDecoration(
-                                        labelText: 'Phone Number (with country code)',
+                                        labelText: 'Phone Number',
                                         prefixIcon: const Icon(Icons.phone_outlined),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
@@ -226,7 +180,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFFE74C3C),
+                                            color: Color(0xFF27AE60),
                                             width: 2,
                                           ),
                                         ),
@@ -238,44 +192,52 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                         return null;
                                       },
                                     ),
-                                    if (_otpSent) const SizedBox(height: 20),
-                                    // OTP Field (conditionally visible)
-                                    if (_otpSent)
-                                      TextFormField(
-                                        controller: _otpController,
-                                        keyboardType: TextInputType.number,
-                                        textAlign: TextAlign.center,
-                                        maxLength: 6,
-                                        decoration: InputDecoration(
-                                          labelText: 'Verification Code',
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
+                                    const SizedBox(height: 20),
+                                    // Password Field
+                                    TextFormField(
+                                      controller: _passwordController,
+                                      obscureText: !_isPasswordVisible,
+                                      decoration: InputDecoration(
+                                        labelText: 'Password',
+                                        prefixIcon: const Icon(Icons.lock_outlined),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _isPasswordVisible
+                                                ? Icons.visibility
+                                                : Icons.visibility_off,
                                           ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                            borderSide: const BorderSide(
-                                              color: Color(0xFFE74C3C),
-                                              width: 2,
-                                            ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isPasswordVisible = !_isPasswordVisible;
+                                            });
+                                          },
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(15),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(15),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFF27AE60),
+                                            width: 2,
                                           ),
                                         ),
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty || value.length != 6) {
-                                            return 'Please enter a valid 6-digit code';
-                                          }
-                                          return null;
-                                        },
                                       ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter your password';
+                                        }
+                                        return null;
+                                      },
+                                    ),
                                     const SizedBox(height: 30),
-                                    // Login or Verify Button (changes text)
+                                    // Login Button
                                     SizedBox(
                                       width: double.infinity,
                                       child: ElevatedButton(
-                                        onPressed: _isLoading
-                                            ? null
-                                            : (_otpSent ? _verifyOtp : _handleLogin),
+                                        onPressed: _isLoading ? null : _handleLogin,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFE74C3C),
+                                          backgroundColor: const Color(0xFF27AE60),
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(vertical: 15),
                                           shape: RoundedRectangleBorder(
@@ -292,14 +254,44 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                                                   strokeWidth: 2,
                                                 ),
                                               )
-                                            : Text(
-                                                _otpSent ? 'Verify Code' : 'Login as Admin',
-                                                style: const TextStyle(
+                                            : const Text(
+                                                'Login',
+                                                style: TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                       ),
+                                    ),
+                                    const SizedBox(height: 30),
+                                    // Signup Link
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          "Don't have an account? ",
+                                          style: TextStyle(
+                                            color: Color(0xFF7F8C8D),
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => const UserSignupPage(),
+                                              ),
+                                            );
+                                          },
+                                          child: const Text(
+                                            'Sign Up',
+                                            style: TextStyle(
+                                              color: Color(0xFF27AE60),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
