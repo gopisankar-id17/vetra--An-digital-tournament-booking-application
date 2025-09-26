@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../landing_page.dart';
+import 'tournaments_list_page.dart';
+import '../../auth_service.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -73,9 +75,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               title: const Text('Manage Tournaments'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tournament management coming soon!'),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TournamentsListPage(),
                   ),
                 );
               },
@@ -114,12 +117,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout'),
-              onTap: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LandingPage()),
-                  (route) => false,
-                );
+              onTap: () async {
+                // Clear admin session
+                final authService = AuthService();
+                await authService.logoutAdmin();
+                
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LandingPage()),
+                    (route) => false,
+                  );
+                }
               },
             ),
           ],

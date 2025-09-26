@@ -39,9 +39,10 @@ class _UserSignupPageState extends State<UserSignupPage> {
 
       try {
         final registerError = await _authService.registerUser(
-          _nameController.text.trim(),
-          _phoneController.text.trim(),
-          _passwordController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          password: _passwordController.text.trim(),
+          fullName: _nameController.text.trim(),
+          email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         );
 
         if (registerError == null) {
