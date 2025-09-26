@@ -90,9 +90,7 @@ class _LandingPageState extends State<LandingPage> {
       constraints: const BoxConstraints(maxWidth: 350),
       child: Card(
         elevation: 20,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -141,9 +139,11 @@ class _LandingPageState extends State<LandingPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const AdminLoginPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const AdminLoginPage(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -157,10 +157,7 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                   child: const Text(
                     'Admin Login',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -177,9 +174,7 @@ class _LandingPageState extends State<LandingPage> {
       constraints: const BoxConstraints(maxWidth: 350),
       child: Card(
         elevation: 20,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -229,14 +224,19 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const UserLoginPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const UserLoginPage(),
+                          ),
                         );
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF94c142),
-                        side: const BorderSide(color: Color(0xFF94c142), width: 2),
+                        side: const BorderSide(
+                          color: Color(0xFF94c142),
+                          width: 2,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -255,9 +255,11 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const UserSignupPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const UserSignupPage(),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
