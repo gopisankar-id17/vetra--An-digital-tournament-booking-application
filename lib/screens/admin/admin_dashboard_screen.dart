@@ -6,8 +6,8 @@ import '../../utils/app_theme.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/tournament_card.dart';
 import '../../widgets/booking_card.dart';
-import '../../widgets/add_tournament_form.dart';
 import '../../widgets/professional_fab.dart';
+import 'add_tournament_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -50,7 +50,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
+        currentIndex: _selectedIndex > 4
+            ? 0
+            : _selectedIndex, // Ensure index is within bounds
         selectedItemColor: AppTheme.primaryColor,
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
@@ -80,37 +82,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-      floatingActionButton: _selectedIndex == 0 || _selectedIndex == 1
+      floatingActionButton: _selectedIndex == 1
           ? ProfessionalFloatingActionButton(
               onPressed: () {
-                if (_selectedIndex == 1) {
-                  _showCreateTournamentDialog(context);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text('Dashboard quick actions coming soon!'),
-                        ],
-                      ),
-                      backgroundColor: AppTheme.primaryColor,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                }
+                _showCreateTournamentDialog(context);
               },
-              tooltip: _selectedIndex == 1
-                  ? 'Create New Tournament'
-                  : 'Add Dashboard Item',
-              icon: _selectedIndex == 1
-                  ? Icons.sports_esports
-                  : Icons.add_circle_outline,
-              label: _selectedIndex == 1 ? 'New Tournament' : 'Add Item',
+              tooltip: 'Create New Tournament',
+              icon: Icons.sports_esports,
+              label: 'New Tournament',
             )
           : null,
     );
@@ -127,7 +106,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 3:
         return 'Notifications';
       case 4:
+        return 'Manage Users';
+      case 5:
+        return 'Analytics Dashboard';
+      case 6:
+        return 'Reports';
+      case 7:
         return 'Profile';
+      case 8:
+        return 'Settings';
       default:
         return 'Admin Dashboard';
     }
@@ -144,7 +131,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 3:
         return _buildNotificationsContent();
       case 4:
+        // Redirect to the Users screen, but use push instead of pushReplacement
+        // to allow navigation back to the dashboard
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushNamed(context, '/admin-users');
+          // Reset the selected index to dashboard to avoid re-navigating
+          // when returning from the users screen
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
+        return const Center(child: CircularProgressIndicator());
+      case 5:
+        // Redirect to the Analytics screen, but use push instead of pushReplacement
+        // to allow navigation back to the dashboard
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushNamed(context, '/admin-analytics');
+          // Reset the selected index to dashboard to avoid re-navigating
+          // when returning from the analytics screen
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
+        return const Center(child: CircularProgressIndicator());
+      case 6:
+        return _buildReportsContent();
+      case 7:
         return _buildProfileContent();
+      case 8:
+        return _buildSettingsContent();
       default:
         return Center(
           child: Text(
@@ -967,42 +982,510 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _showCreateTournamentDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AddTournamentForm(
-        onTournamentCreated: (tournament) {
-          // Handle tournament creation
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Tournament "${tournament.name}" created successfully!',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddTournamentPage(
+          onTournamentCreated: (tournament) {
+            // Handle tournament creation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tournament "${tournament.name}" created successfully!',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+
+            // Refresh the tournaments list
+            setState(() {
+              // Add logic to refresh tournaments if needed
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  // Implementation for Reports screen
+  Widget _buildReportsContent() {
+    final List<Map<String, dynamic>> reports = [
+      {
+        'title': 'Monthly Revenue Report',
+        'description': 'Financial summary for the current month',
+        'date': 'August 2023',
+        'icon': Icons.attach_money,
+        'type': 'Financial',
+      },
+      {
+        'title': 'User Activity Analysis',
+        'description': 'User engagement and activity patterns',
+        'date': 'Last 30 days',
+        'icon': Icons.analytics,
+        'type': 'Analytics',
+      },
+      {
+        'title': 'Tournament Performance',
+        'description': 'Completion rates and participant satisfaction',
+        'date': 'Q3 2023',
+        'icon': Icons.emoji_events,
+        'type': 'Performance',
+      },
+      {
+        'title': 'Booking Conversion Report',
+        'description': 'View to booking conversion analysis',
+        'date': 'July 2023',
+        'icon': Icons.assignment_turned_in,
+        'type': 'Conversion',
+      },
+    ];
+
+    // Create a completely new implementation with correct structure
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14.0,
+        vertical: 16.0,
+      ), // Adjusted padding
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and actions - fix overflow
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Text(
+                  'Reports & Analytics',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Generate custom report feature coming soon!',
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_chart, size: 18),
+                label: const Text('Generate', style: TextStyle(fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Filter options - Use SingleChildScrollView to prevent horizontal overflow
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('All Reports', true),
+                _buildFilterChip('Financial', false),
+                _buildFilterChip('User Analytics', false),
+                _buildFilterChip('Tournaments', false),
+                _buildFilterChip('Bookings', false),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Reports grid - Use Expanded with regular ListView to fix overflow
+          Expanded(
+            child: GridView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              shrinkWrap: true, // Make grid take only needed space
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12, // Reduced spacing
+                mainAxisSpacing: 12, // Reduced spacing
+                // Use a dynamic aspect ratio based on screen size, minimum 2.0
+                childAspectRatio: MediaQuery.of(context).size.width < 360
+                    ? 2.3
+                    : 2.0,
+              ),
+              itemCount: reports.length,
+              itemBuilder: (context, index) {
+                final report = reports[index];
+                return Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Viewing ${report['title']} - Coming soon!',
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 8.0,
+                      ), // Further reduced padding
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min, // Use minimum space
+                        mainAxisAlignment: MainAxisAlignment
+                            .spaceBetween, // Distribute space evenly
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(
+                                  6,
+                                ), // Reduced padding
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(
+                                    6,
+                                  ), // Smaller radius
+                                ),
+                                child: Icon(
+                                  report['icon'],
+                                  color: AppTheme.primaryColor,
+                                  size: 18, // Smaller icon
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, // Reduced padding
+                                  vertical: 3, // Reduced padding
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.secondaryColor.withOpacity(
+                                    0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    10,
+                                  ), // Smaller radius
+                                  border: Border.all(
+                                    color: AppTheme.secondaryColor.withOpacity(
+                                      0.3,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  report['type'],
+                                  style: TextStyle(
+                                    fontSize: 10, // Smaller text
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.secondaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6), // Further reduced spacing
+                          Text(
+                            report['title'],
+                            style: const TextStyle(
+                              fontSize: 14, // Further reduced font size
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          const SizedBox(height: 4), // Further reduced spacing
+                          Text(
+                            report['description'],
+                            style: const TextStyle(
+                              fontSize: 11, // Further reduced font size
+                              color: Colors.grey,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          SizedBox(height: 2), // Minimal spacing
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  report['date'],
+                                  style: const TextStyle(
+                                    fontSize: 10, // Further reduced font size
+                                    color: Colors.grey,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 4), // Reduced spacing
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 12, // Smaller icon
+                                color: AppTheme.primaryColor,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 4),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6.0), // Reduced padding
+      child: FilterChip(
+        materialTapTargetSize:
+            MaterialTapTargetSize.shrinkWrap, // Smaller tap target
+        visualDensity: VisualDensity.compact, // More compact layout
+        label: Text(
+          label,
+          style: const TextStyle(fontSize: 12),
+        ), // Smaller text
+        selected: isSelected,
+        onSelected: (bool selected) {
+          // Filter logic would go here
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Filter by $label'),
+              duration: const Duration(seconds: 1),
             ),
           );
-
-          // Refresh the tournaments list
-          setState(() {
-            // Add logic to refresh tournaments if needed
-          });
         },
+        backgroundColor: Colors.grey[200],
+        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+        checkmarkColor: AppTheme.primaryColor,
+        labelStyle: TextStyle(
+          color: isSelected ? AppTheme.primaryColor : Colors.black87,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
+    );
+  }
+
+  // Implementation for Settings screen
+  Widget _buildSettingsContent() {
+    // Settings categories
+    final List<Map<String, dynamic>> settingsCategories = [
+      {
+        'title': 'General Settings',
+        'icon': Icons.settings,
+        'settings': [
+          {
+            'title': 'App Preferences',
+            'subtitle': 'Customize app behavior and appearance',
+            'icon': Icons.tune,
+          },
+          {
+            'title': 'Notifications',
+            'subtitle': 'Configure notification preferences',
+            'icon': Icons.notifications_active,
+          },
+          {
+            'title': 'Language',
+            'subtitle': 'Change app language',
+            'icon': Icons.language,
+            'value': 'English',
+          },
+        ],
+      },
+      {
+        'title': 'Tournament Settings',
+        'icon': Icons.emoji_events,
+        'settings': [
+          {
+            'title': 'Default Tournament Settings',
+            'subtitle': 'Configure default values for new tournaments',
+            'icon': Icons.sports_esports,
+          },
+          {
+            'title': 'Registration Rules',
+            'subtitle': 'Set default registration and cancellation policies',
+            'icon': Icons.rule,
+          },
+        ],
+      },
+      {
+        'title': 'Payment Settings',
+        'icon': Icons.payment,
+        'settings': [
+          {
+            'title': 'Payment Methods',
+            'subtitle': 'Manage accepted payment methods',
+            'icon': Icons.credit_card,
+          },
+          {
+            'title': 'Payout Schedule',
+            'subtitle': 'Configure default payout timeline',
+            'icon': Icons.schedule,
+          },
+        ],
+      },
+      {
+        'title': 'System',
+        'icon': Icons.computer,
+        'settings': [
+          {
+            'title': 'Data Management',
+            'subtitle': 'Configure backup and data retention policies',
+            'icon': Icons.storage,
+          },
+          {
+            'title': 'Admin Accounts',
+            'subtitle': 'Manage admin users and permissions',
+            'icon': Icons.admin_panel_settings,
+          },
+          {
+            'title': 'Security Settings',
+            'subtitle': 'Configure security options and password policies',
+            'icon': Icons.security,
+          },
+        ],
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Settings',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Configure your application settings',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+
+            // Search bar
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'Search settings...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                filled: true,
+                fillColor: Colors.grey[100],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Settings categories
+            ...settingsCategories.map(
+              (category) => _buildSettingsCategory(category),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsCategory(Map<String, dynamic> category) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            children: [
+              Icon(category['icon'], color: AppTheme.primaryColor),
+              const SizedBox(width: 12),
+              Text(
+                category['title'],
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Card(
+          elevation: 2,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: category['settings'].length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final setting = category['settings'][index];
+              return ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(setting['icon'], color: AppTheme.primaryColor),
+                ),
+                title: Text(setting['title']),
+                subtitle: Text(setting['subtitle']),
+                trailing: setting.containsKey('value')
+                    ? Text(
+                        setting['value'],
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${setting['title']} - Coming soon!'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }

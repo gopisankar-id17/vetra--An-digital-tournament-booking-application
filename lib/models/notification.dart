@@ -6,8 +6,12 @@ class Notification {
   final String message;
   final DateTime timestamp;
   final NotificationType type;
-  final bool isRead;
+  bool isRead; // Changed from final to allow modification
   final String? actionLink;
+
+  // Additional properties needed
+  String get body => message; // Alias for message
+  String? actionText; // Text to display for actionable notifications
 
   Notification({
     required this.id,
@@ -70,4 +74,13 @@ class Notification {
 }
 
 // Enum representing the type of notification
-enum NotificationType { booking, reminder, announcement, admin, system }
+enum NotificationType {
+  booking,
+  reminder,
+  announcement,
+  admin,
+  system,
+  alert,
+  schedule,
+  result,
+}

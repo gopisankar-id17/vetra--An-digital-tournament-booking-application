@@ -10,6 +10,7 @@ import '../../widgets/tournament_carousel.dart';
 import '../../widgets/booking_card.dart';
 import '../../widgets/notification_card.dart';
 import '../../widgets/profile_card.dart';
+import 'user_profile_page.dart';
 
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
@@ -148,8 +149,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               style: TextStyle(fontSize: 16, color: AppTheme.textMediumColor),
             ),
 
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16), // Reduced spacing
             // Upcoming tournaments carousel - MOVED TO TOP
             TournamentCarousel(
               tournaments: upcomingTournaments,
@@ -164,8 +164,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               },
             ),
 
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16), // Reduced spacing
             // Ongoing tournaments carousel
             TournamentCarousel(
               tournaments: _tournaments
@@ -182,8 +181,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               },
             ),
 
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16), // Reduced spacing
             // Completed tournaments carousel
             TournamentCarousel(
               tournaments: _tournaments
@@ -200,8 +198,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               },
             ),
 
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16), // Reduced spacing
             // Quick stats cards
             _buildQuickStatsRow(),
 
@@ -916,9 +913,10 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
             title: 'Edit Profile',
             description: 'Update your personal information',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Edit profile functionality coming soon'),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserProfilePage(user: _user),
                 ),
               );
             },

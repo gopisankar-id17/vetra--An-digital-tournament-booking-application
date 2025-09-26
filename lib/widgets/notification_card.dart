@@ -147,6 +147,12 @@ class NotificationCard extends StatelessWidget {
         return AppTheme.warningColor;
       case model.NotificationType.announcement:
         return AppTheme.secondaryColor;
+      case model.NotificationType.alert:
+        return AppTheme.errorColor;
+      case model.NotificationType.schedule:
+        return AppTheme.warningColor;
+      case model.NotificationType.result:
+        return AppTheme.successColor;
       case model.NotificationType.admin:
         return AppTheme.primaryColor;
       case model.NotificationType.system:
@@ -166,6 +172,12 @@ class NotificationCard extends StatelessWidget {
         return Icons.admin_panel_settings;
       case model.NotificationType.system:
         return Icons.info;
+      case model.NotificationType.alert:
+        return Icons.warning;
+      case model.NotificationType.schedule:
+        return Icons.event;
+      case model.NotificationType.result:
+        return Icons.emoji_events;
     }
   }
 

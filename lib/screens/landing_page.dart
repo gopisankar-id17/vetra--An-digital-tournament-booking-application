@@ -139,7 +139,7 @@ class _LandingPageState extends State<LandingPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AdminLoginPage(),
@@ -224,7 +224,7 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const UserLoginPage(),
@@ -255,7 +255,7 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const UserSignupPage(),

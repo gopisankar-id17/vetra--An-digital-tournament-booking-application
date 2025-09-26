@@ -11,6 +11,10 @@ class Booking {
   final String? notes;
   final String? receiptId;
 
+  // Additional properties needed
+  final int numberOfParticipants;
+  final double discount;
+
   Booking({
     required this.id,
     required this.tournamentId,
@@ -22,7 +26,10 @@ class Booking {
     required this.amountPaid,
     this.notes,
     this.receiptId,
-  });
+    int? numberOfParticipants,
+    double? discount,
+  }) : this.numberOfParticipants = numberOfParticipants ?? 1,
+       this.discount = discount ?? 0.0;
 
   // Sample bookings for demonstration
   static List<Booking> getSampleBookings() {

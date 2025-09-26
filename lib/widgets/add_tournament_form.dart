@@ -697,6 +697,7 @@ class _AddTournamentFormState extends State<AddTournamentForm>
         location: _locationController.text,
         organizerId: 'admin_${DateTime.now().millisecondsSinceEpoch}',
         organizerName: _organizerController.text,
+        organizer: _organizerController.text,
         entryFee: double.parse(_entryFeeController.text),
         maxParticipants: int.parse(_maxParticipantsController.text),
         currentParticipants: 0,

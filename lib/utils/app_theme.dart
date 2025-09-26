@@ -6,6 +6,9 @@ class AppTheme {
   static const Color primaryLightColor = Color(0xFF9f7aca);
   static const Color primaryDarkColor = Color(0xFF563691);
 
+  // Named color for easier use throughout the app
+  static Color get primary => primaryColor;
+
   // Secondary colors
   static const Color secondaryColor = Color(0xFF94c142);
   static const Color secondaryLightColor = Color(0xFFb1d46b);
