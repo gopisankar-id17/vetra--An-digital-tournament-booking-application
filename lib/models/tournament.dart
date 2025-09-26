@@ -119,7 +119,7 @@ class Tournament {
         organizerId: '1',
         organizerName: 'Tennis Association',
         imageUrl:
-            'https://images.unsplash.com/photo-1622279457486-28f24525f5d3?q=80&w=300',
+            'https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?q=80&w=300',
         maxParticipants: 128,
         currentParticipants: 128,
         entryFee: 7500.0,
