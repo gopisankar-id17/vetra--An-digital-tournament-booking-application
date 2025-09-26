@@ -42,7 +42,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       color: Color(0xFFE74C3C),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: 6),
                   Text(
                     'Admin Panel',
                     style: TextStyle(
@@ -53,10 +53,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   ),
                   Text(
                     'Tournament Management',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
               ),
@@ -69,12 +66,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.sports_soccer, color: Color(0xFFE74C3C)),
+              leading: const Icon(
+                Icons.sports_soccer,
+                color: Color(0xFFE74C3C),
+              ),
               title: const Text('Manage Tournaments'),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tournament management coming soon!')),
+                  const SnackBar(
+                    content: Text('Tournament management coming soon!'),
+                  ),
                 );
               },
             ),
@@ -144,15 +146,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   color: Color(0xFF2C3E50),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               const Text(
                 'Manage your tournament platform',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF7F8C8D),
-                ),
+                style: TextStyle(fontSize: 16, color: Color(0xFF7F8C8D)),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 16),
               Expanded(
                 child: GridView.count(
                   crossAxisCount: 2,
@@ -165,7 +164,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       Icons.sports_soccer,
                       const Color(0xFF3498DB),
                       () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Tournament management coming soon!')),
+                        const SnackBar(
+                          content: Text('Tournament management coming soon!'),
+                        ),
                       ),
                     ),
                     _buildDashboardCard(
@@ -174,7 +175,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       Icons.people,
                       const Color(0xFF2ECC71),
                       () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User management coming soon!')),
+                        const SnackBar(
+                          content: Text('User management coming soon!'),
+                        ),
                       ),
                     ),
                     _buildDashboardCard(
@@ -183,7 +186,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       Icons.event_note,
                       const Color(0xFFF39C12),
                       () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Booking management coming soon!')),
+                        const SnackBar(
+                          content: Text('Booking management coming soon!'),
+                        ),
                       ),
                     ),
                     _buildDashboardCard(
@@ -192,7 +197,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       Icons.attach_money,
                       const Color(0xFF9B59B6),
                       () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Revenue reports coming soon!')),
+                        const SnackBar(
+                          content: Text('Revenue reports coming soon!'),
+                        ),
                       ),
                     ),
                   ],
@@ -205,7 +212,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  Widget _buildDashboardCard(String title, String value, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildDashboardCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -222,38 +235,37 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 30,
-                  color: color,
+                child: Icon(icon, size: 24, color: color),
+              ),
+              const SizedBox(height: 6),
+              FittedBox(
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
+                  ),
                 ),
               ),
-              const SizedBox(height: 15),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 4),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF7F8C8D),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF7F8C8D)),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
