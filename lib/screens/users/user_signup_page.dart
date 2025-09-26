@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
-import '../../models/user_model.dart';
-import 'user_login_page.dart';
+import '../../auth_service.dart';
 
 class UserSignupPage extends StatefulWidget {
   const UserSignupPage({Key? key}) : super(key: key);
@@ -40,16 +38,27 @@ class _UserSignupPageState extends State<UserSignupPage> {
       });
 
       try {
-        final UserModel? user = await _authService.registerUser(
-          phoneNumber: _phoneController.text.trim(),
-          password: _passwordController.text.trim(),
-          email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-          fullName: _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+        final registerError = await _authService.registerUser(
+          _nameController.text.trim(),
+          _phoneController.text.trim(),
+          _passwordController.text.trim(),
         );
 
-        if (user != null) {
+        if (registerError == null) {
           if (mounted) {
             _showSuccessAndNavigate();
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(registerError),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
         }
       } catch (e) {
@@ -85,10 +94,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
         backgroundColor: Colors.green,
       ),
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const UserLoginPage()),
-    );
+    Navigator.pushReplacementNamed(context, '/user-login');
   }
 
   @override

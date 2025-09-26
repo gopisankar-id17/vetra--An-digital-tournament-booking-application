@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
-import '../../models/user_model.dart';
-import 'user_dashboard.dart';
-import 'user_signup_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../auth_service.dart';
 
 class UserLoginPage extends StatefulWidget {
   const UserLoginPage({Key? key}) : super(key: key);
@@ -12,300 +10,164 @@ class UserLoginPage extends StatefulWidget {
 }
 
 class _UserLoginPageState extends State<UserLoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _auth = AuthService();
   bool _isLoading = false;
-  bool _isPasswordVisible = false;
-  final AuthService _authService = AuthService();
+
+  // New addition: FocusNode for handling cursor position
+  final FocusNode _mobileFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set the initial text to "+91"
+    _mobileController.text = '+91';
+    
+    // Add a listener to keep the "+91" prefix
+    _mobileController.addListener(() {
+      if (!_mobileController.text.startsWith('+91')) {
+        _mobileController.text = '+91';
+        // Move the cursor to the end
+        _mobileController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _mobileController.text.length),
+        );
+      }
+    });
+
+    // Add a listener to place the cursor correctly on focus
+    _mobileFocusNode.addListener(() {
+      if (_mobileFocusNode.hasFocus) {
+        // Delay moving the cursor to ensure the keyboard is up
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _mobileController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _mobileController.text.length),
+          );
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    // Dispose the focus node and listener
+    _mobileFocusNode.dispose();
+    _mobileController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+  Future<void> _handleUserLogin(BuildContext context) async {
+    // Get the full mobile number as stored during signup
+    final mobileNo = _mobileController.text.trim().replaceAll(' ', '');
+    final password = _passwordController.text;
 
-      try {
-        final UserModel? user = await _authService.authenticateUser(
-          _phoneController.text.trim(),
-          _passwordController.text.trim(),
-        );
+    setState(() {
+      _isLoading = true;
+    });
 
-        if (user != null) {
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const UserDashboardPage()),
-            );
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Invalid phone number or password. Please try again.'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('An error occurred: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+    try {
+      final loginError = await _auth.loginUser(mobileNo, password);
+
+      if (loginError != null) {
+        _showSnackBar(context, loginError);
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_token', mobileNo);
+      
+      _showSnackBar(context, 'User Login Successful!');
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/user-dashboard');
+      }
+    } catch (e) {
+      _showSnackBar(context, 'Login failed. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF27AE60),
-              Color(0xFF2ECC71),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Custom App Bar
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Text(
-                      'User Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+      appBar: AppBar(
+        title: const Text('User Login'),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white, // For better contrast
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text(
+              'Welcome Back!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
               ),
-              // Main Content
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Card(
-                        elevation: 20,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(30.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // User Icon
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF27AE60).withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Color(0xFF27AE60),
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                              const Text(
-                                'Welcome Back',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2C3E50),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                'Sign in to your account',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF7F8C8D),
-                                ),
-                              ),
-                              const SizedBox(height: 40),
-                              // Login Form
-                              Form(
-                                key: _formKey,
-                                child: Column(
-                                  children: [
-                                    // Phone Number Field
-                                    TextFormField(
-                                      controller: _phoneController,
-                                      keyboardType: TextInputType.phone,
-                                      decoration: InputDecoration(
-                                        labelText: 'Phone Number',
-                                        prefixIcon: const Icon(Icons.phone_outlined),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFF27AE60),
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your phone number';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    const SizedBox(height: 20),
-                                    // Password Field
-                                    TextFormField(
-                                      controller: _passwordController,
-                                      obscureText: !_isPasswordVisible,
-                                      decoration: InputDecoration(
-                                        labelText: 'Password',
-                                        prefixIcon: const Icon(Icons.lock_outlined),
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            _isPasswordVisible
-                                                ? Icons.visibility
-                                                : Icons.visibility_off,
-                                          ),
-                                          onPressed: () {
-                                            setState(() {
-                                              _isPasswordVisible = !_isPasswordVisible;
-                                            });
-                                          },
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFF27AE60),
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your password';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    const SizedBox(height: 30),
-                                    // Login Button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        onPressed: _isLoading ? null : _handleLogin,
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF27AE60),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 15),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                          ),
-                                          elevation: 5,
-                                        ),
-                                        child: _isLoading
-                                            ? const SizedBox(
-                                                height: 20,
-                                                width: 20,
-                                                child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : const Text(
-                                                'Login',
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 30),
-                                    // Signup Link
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Text(
-                                          "Don't have an account? ",
-                                          style: TextStyle(
-                                            color: Color(0xFF7F8C8D),
-                                          ),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => const UserSignupPage(),
-                                              ),
-                                            );
-                                          },
-                                          child: const Text(
-                                            'Sign Up',
-                                            style: TextStyle(
-                                              color: Color(0xFF27AE60),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+            ),
+            const SizedBox(height: 40),
+            TextField(
+              controller: _mobileController,
+              focusNode: _mobileFocusNode, // New addition
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Mobile Number',
+                hintText: '+911234567890',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.phone),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+            ),
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : () => _handleUserLogin(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 16),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/user-signup');
+              },
+              child: const Text('Don\'t have an account? Sign up'),
+            ),
+          ],
         ),
       ),
     );
