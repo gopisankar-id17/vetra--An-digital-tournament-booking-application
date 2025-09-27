@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-// Note: This refactoring makes the separate otp_verification_page.dart file redundant.
+import '../../auth_service.dart';
 
 class UserSignupPage extends StatefulWidget {
   const UserSignupPage({Key? key}) : super(key: key);
@@ -16,14 +15,11 @@ class _UserSignupPageState extends State<UserSignupPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _otpController = TextEditingController(); // New controller for OTP
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   bool _agreeToTerms = false;
-  bool _otpSent = false; // New state variable to control UI
-  String _verificationId = ''; // New state variable to store the verification ID
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -32,7 +28,6 @@ class _UserSignupPageState extends State<UserSignupPage> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -43,62 +38,42 @@ class _UserSignupPageState extends State<UserSignupPage> {
       });
 
       try {
-        // First, create the user with email/password
-        final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
+        final registerError = await _authService.registerUser(
+          phoneNumber: _phoneController.text.trim(),
           password: _passwordController.text.trim(),
+          fullName: _nameController.text.trim(),
+          email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         );
 
-        // Then, initiate phone number verification
-        await _auth.verifyPhoneNumber(
-          phoneNumber: _phoneController.text.trim(),
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // Auto-retrieval on Android, sign the user in with phone number
-            await userCredential.user!.linkWithCredential(credential);
-            if (mounted) {
-              _showSuccessAndNavigate();
-            }
-          },
-          verificationFailed: (FirebaseAuthException e) {
+        if (registerError == null) {
+          if (mounted) {
+            _showSuccessAndNavigate();
+          }
+        } else {
+          if (mounted) {
             setState(() {
               _isLoading = false;
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(e.message ?? 'An error occurred during phone verification.'),
+                content: Text(registerError),
                 backgroundColor: Colors.red,
               ),
             );
-          },
-          codeSent: (String verificationId, int? resendToken) {
-            setState(() {
-              _verificationId = verificationId;
-              _otpSent = true;
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Verification code sent to your phone!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-          codeAutoRetrievalTimeout: (String verificationId) {
-            setState(() {
-              _isLoading = false;
-            });
-          },
-        );
-      } on FirebaseAuthException catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'An error occurred.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } else if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -110,38 +85,10 @@ class _UserSignupPageState extends State<UserSignupPage> {
     }
   }
 
-  Future<void> _verifyOtp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      try {
-        final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-          verificationId: _verificationId,
-          smsCode: _otpController.text.trim(),
-        );
-        
-        // Link the phone number to the existing user
-        await FirebaseAuth.instance.currentUser!.linkWithCredential(credential);
-
-        if (mounted) {
-          _showSuccessAndNavigate();
-        }
-      } on FirebaseAuthException catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Invalid OTP. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   void _showSuccessAndNavigate() {
+    setState(() {
+      _isLoading = false;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Account created successfully!'),
@@ -155,14 +102,16 @@ class _UserSignupPageState extends State<UserSignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF3498DB),
-              Color(0xFF2980B9),
-            ],
+          image: DecorationImage(
+            image: AssetImage('assets/images/running.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black54, // Dark overlay for text readability
+              BlendMode.darken,
+            ),
           ),
         ),
         child: SafeArea(
@@ -199,7 +148,8 @@ class _UserSignupPageState extends State<UserSignupPage> {
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: Card(
-                        elevation: 20,
+                        elevation: 8,
+                        color: Colors.white.withOpacity(0.0), // Transparent white
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -208,17 +158,33 @@ class _UserSignupPageState extends State<UserSignupPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // User Icon
+                              // Vetra Logo
                               Container(
-                                padding: const EdgeInsets.all(20),
+                                padding: const EdgeInsets.all(15),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3498DB).withOpacity(0.1),
+                                  color: Colors.white,
                                   shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(
-                                  Icons.person_add,
-                                  size: 50,
-                                  color: Color(0xFF3498DB),
+                                child: Image.asset(
+                                  'assets/Vetra_logo.png',
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Fallback to icon if logo fails to load
+                                    return const Icon(
+                                      Icons.sports_soccer,
+                                      size: 50,
+                                      color: Color(0xFF6f42c1),
+                                    );
+                                  },
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -256,7 +222,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -272,12 +238,12 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                       },
                                     ),
                                     const SizedBox(height: 20),
-                                    // Email Field
+                                    // Email Field (Optional)
                                     TextFormField(
                                       controller: _emailController,
                                       keyboardType: TextInputType.emailAddress,
                                       decoration: InputDecoration(
-                                        labelText: 'Email',
+                                        labelText: 'Email (Optional)',
                                         prefixIcon: const Icon(Icons.email_outlined),
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
@@ -285,18 +251,17 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
                                       ),
                                       validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your email';
-                                        }
-                                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                            .hasMatch(value)) {
-                                          return 'Please enter a valid email';
+                                        if (value != null && value.isNotEmpty) {
+                                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                              .hasMatch(value)) {
+                                            return 'Please enter a valid email';
+                                          }
                                         }
                                         return null;
                                       },
@@ -315,7 +280,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -353,7 +318,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -397,7 +362,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -413,33 +378,6 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                       },
                                     ),
                                     const SizedBox(height: 20),
-                                    // OTP Field (conditionally visible)
-                                    if (_otpSent)
-                                      TextFormField(
-                                        controller: _otpController,
-                                        keyboardType: TextInputType.number,
-                                        textAlign: TextAlign.center,
-                                        maxLength: 6,
-                                        decoration: InputDecoration(
-                                          labelText: 'Verification Code',
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                            borderSide: const BorderSide(
-                                              color: Color(0xFF3498DB),
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty || value.length != 6) {
-                                            return 'Please enter a valid 6-digit code';
-                                          }
-                                          return null;
-                                        },
-                                      ),
                                     // Terms and Conditions Checkbox
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +389,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                               _agreeToTerms = value ?? false;
                                             });
                                           },
-                                          activeColor: const Color(0xFF3498DB),
+                                          activeColor: const Color(0xFF6f42c1),
                                         ),
                                         Expanded(
                                           child: Column(
@@ -475,7 +413,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                                       TextSpan(
                                                         text: 'Terms of Service',
                                                         style: TextStyle(
-                                                          color: Color(0xFF3498DB),
+                                                          color: Color(0xFF6f42c1),
                                                           fontWeight: FontWeight.bold,
                                                           decoration: TextDecoration.underline,
                                                         ),
@@ -484,7 +422,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                                       TextSpan(
                                                         text: 'Privacy Policy',
                                                         style: TextStyle(
-                                                          color: Color(0xFF3498DB),
+                                                          color: Color(0xFF6f42c1),
                                                           fontWeight: FontWeight.bold,
                                                           decoration: TextDecoration.underline,
                                                         ),
@@ -499,15 +437,13 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                       ],
                                     ),
                                     const SizedBox(height: 30),
-                                    // Sign Up or Verify Button (changes text)
+                                    // Sign Up Button
                                     SizedBox(
                                       width: double.infinity,
                                       child: ElevatedButton(
-                                        onPressed: _isLoading
-                                            ? null
-                                            : (_otpSent ? _verifyOtp : _handleSignup),
+                                        onPressed: _isLoading ? null : _handleSignup,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF3498DB),
+                                          backgroundColor: const Color(0xFF6f42c1),
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(vertical: 15),
                                           shape: RoundedRectangleBorder(
@@ -524,9 +460,9 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                                   strokeWidth: 2,
                                                 ),
                                               )
-                                            : Text(
-                                                _otpSent ? 'Verify Code' : 'Create Account',
-                                                style: const TextStyle(
+                                            : const Text(
+                                                'Create Account',
+                                                style: TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -552,7 +488,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                           child: const Text(
                                             'Login',
                                             style: TextStyle(
-                                              color: Color(0xFF3498DB),
+                                              color: Color(0xFF6f42c1),
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -577,3 +513,4 @@ class _UserSignupPageState extends State<UserSignupPage> {
     );
   }
 }
+

@@ -1,319 +1,186 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../auth_service.dart';
 
-class AdminLoginPage extends StatefulWidget {
-  const AdminLoginPage({Key? key}) : super(key: key);
+class UserLoginPage extends StatefulWidget {
+  const UserLoginPage({Key? key}) : super(key: key);
 
   @override
-  State<AdminLoginPage> createState() => _AdminLoginPageState();
+  State<UserLoginPage> createState() => _UserLoginPageState();
 }
 
-class _AdminLoginPageState extends State<AdminLoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
-  final _otpController = TextEditingController(); // New controller for OTP
+class _UserLoginPageState extends State<UserLoginPage> {
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _auth = AuthService();
   bool _isLoading = false;
-  bool _otpSent = false; // New state variable to control UI
-  String _verificationId = ''; // New state variable to store the verification ID
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // New addition: FocusNode for handling cursor position
+  final FocusNode _mobileFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set the initial text to "+91"
+    _mobileController.text = '+91';
+    
+    // Add a listener to keep the "+91" prefix
+    _mobileController.addListener(() {
+      if (!_mobileController.text.startsWith('+91')) {
+        _mobileController.text = '+91';
+        // Move the cursor to the end
+        _mobileController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _mobileController.text.length),
+        );
+      }
+    });
+
+    // Add a listener to place the cursor correctly on focus
+    _mobileFocusNode.addListener(() {
+      if (_mobileFocusNode.hasFocus) {
+        // Delay moving the cursor to ensure the keyboard is up
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _mobileController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _mobileController.text.length),
+          );
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _otpController.dispose();
+    // Dispose the focus node and listener
+    _mobileFocusNode.dispose();
+    _mobileController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _handleUserLogin(BuildContext context) async {
+    // Get the full mobile number as stored during signup
+    final mobileNo = _mobileController.text.trim().replaceAll(' ', '');
+    final password = _passwordController.text;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await _auth.loginUser(mobileNo, password);
+
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
 
-      try {
-        await _auth.verifyPhoneNumber(
-          phoneNumber: _phoneController.text.trim(),
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // Auto-retrieval on Android, sign the user in directly
-            await _auth.signInWithCredential(credential);
-            if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const AdminDashboard()), // TODO: Create AdminDashboard
-              );
-            }
-          },
-          verificationFailed: (FirebaseAuthException e) {
-            setState(() {
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(e.message ?? 'An error occurred during verification.'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          },
-          codeSent: (String verificationId, int? resendToken) {
-            setState(() {
-              _verificationId = verificationId;
-              _otpSent = true;
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Verification code sent to your phone!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-          codeAutoRetrievalTimeout: (String verificationId) {
-            setState(() {
-              _isLoading = false;
-            });
-          },
-        );
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An unexpected error occurred. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (result['success'] == true) {
+        _showSnackBar(context, result['message']);
+        
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/user-dashboard');
+        }
+      } else {
+        _showSnackBar(context, result['message']);
       }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showSnackBar(context, 'Login failed. Please try again.');
     }
   }
 
-  Future<void> _verifyOtp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      try {
-        final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-          verificationId: _verificationId,
-          smsCode: _otpController.text.trim(),
-        );
-
-        await _auth.signInWithCredential(credential);
-        
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminDashboard()), // TODO: Create AdminDashboard
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Invalid OTP. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Login'),
+        backgroundColor: const Color(0xFF6f42c1),
+        foregroundColor: Colors.white, // For better contrast
+      ),
       body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE74C3C),
-              Color(0xFFC0392B),
-            ],
+          image: DecorationImage(
+            image: AssetImage('assets/images/sports.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black54, // Dark overlay for text readability
+              BlendMode.darken,
+            ),
           ),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Custom App Bar
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Text(
-                      'Admin Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+        child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text(
+              'Welcome Back!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              // Main Content
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Card(
-                        elevation: 20,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(30.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Admin Icon
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE74C3C).withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.admin_panel_settings,
-                                  size: 60,
-                                  color: Color(0xFFE74C3C),
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                              const Text(
-                                'Admin Portal',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2C3E50),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                'Sign in to manage tournaments',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF7F8C8D),
-                                ),
-                              ),
-                              const SizedBox(height: 40),
-                              // Login Form
-                              Form(
-                                key: _formKey,
-                                child: Column(
-                                  children: [
-                                    // Phone Number Field
-                                    TextFormField(
-                                      controller: _phoneController,
-                                      keyboardType: TextInputType.phone,
-                                      decoration: InputDecoration(
-                                        labelText: 'Phone Number (with country code)',
-                                        prefixIcon: const Icon(Icons.phone_outlined),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(15),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE74C3C),
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your phone number';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    if (_otpSent) const SizedBox(height: 20),
-                                    // OTP Field (conditionally visible)
-                                    if (_otpSent)
-                                      TextFormField(
-                                        controller: _otpController,
-                                        keyboardType: TextInputType.number,
-                                        textAlign: TextAlign.center,
-                                        maxLength: 6,
-                                        decoration: InputDecoration(
-                                          labelText: 'Verification Code',
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                            borderSide: const BorderSide(
-                                              color: Color(0xFFE74C3C),
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty || value.length != 6) {
-                                            return 'Please enter a valid 6-digit code';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    const SizedBox(height: 30),
-                                    // Login or Verify Button (changes text)
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        onPressed: _isLoading
-                                            ? null
-                                            : (_otpSent ? _verifyOtp : _handleLogin),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFE74C3C),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 15),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(15),
-                                          ),
-                                          elevation: 5,
-                                        ),
-                                        child: _isLoading
-                                            ? const SizedBox(
-                                                height: 20,
-                                                width: 20,
-                                                child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : Text(
-                                                _otpSent ? 'Verify Code' : 'Login as Admin',
-                                                style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+            ),
+            const SizedBox(height: 40),
+            TextField(
+              controller: _mobileController,
+              focusNode: _mobileFocusNode, // New addition
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Mobile Number',
+                hintText: '+911234567890',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.phone),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+            ),
+            const SizedBox(height: 35),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : () => _handleUserLogin(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6f42c1),
+                  foregroundColor: Colors.white,
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 15),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/user-signup');
+              },
+              child: const Text(
+                'Don\'t have an account? Sign up',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
         ),
       ),
     );
