@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen> {
     });
 
     // Navigate to LandingPage after 10 seconds
-    Timer(const Duration(seconds: 10), () {
+    Timer(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LandingPage()),
@@ -125,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-  "VETRA\nTournament Booking",
+  "VETRA",
   textAlign: TextAlign.center,
   style: TextStyle(
     color: Colors.white,
