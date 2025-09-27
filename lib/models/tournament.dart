@@ -241,6 +241,116 @@ class Tournament {
       ),
     ];
   }
+
+  // Convert Tournament to Map for Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'startDate': startDate.toUtc(),
+      'endDate': endDate.toUtc(),
+      'registrationDeadline': registrationDeadline?.toUtc(),
+      'location': location,
+      'organizerId': organizerId,
+      'organizerName': organizerName,
+      'organizer': organizer,
+      'imageUrl': imageUrl,
+      'maxParticipants': maxParticipants,
+      'currentParticipants': currentParticipants,
+      'entryFee': entryFee,
+      'status': status.toString().split('.').last,
+      'categories': categories,
+      'format': format.toString().split('.').last,
+      'mode': mode.toString().split('.').last,
+      'rules': rules,
+      'prizes': prizes,
+      'contactInfo': contactInfo,
+      'ticketTypes': ticketTypes,
+      'participantsCount': participantsCount,
+      'prizePool': prizePool,
+      'organizerPhotoUrl': organizerPhotoUrl,
+      'organizerPastTournaments': organizerPastTournaments,
+      'startTime': startTime,
+    };
+  }
+
+  // Create Tournament from Map for Firestore
+  static Tournament fromMap(Map<String, dynamic> map) {
+    return Tournament(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      description: map['description'] ?? '',
+      startDate: map['startDate']?.toDate() ?? DateTime.now(),
+      endDate: map['endDate']?.toDate() ?? DateTime.now(),
+      registrationDeadline: map['registrationDeadline']?.toDate(),
+      location: map['location'] ?? '',
+      organizerId: map['organizerId'],
+      organizerName: map['organizerName'],
+      organizer: map['organizer'] ?? '',
+      imageUrl: map['imageUrl'],
+      maxParticipants: map['maxParticipants'] ?? 0,
+      currentParticipants: map['currentParticipants'] ?? 0,
+      entryFee: map['entryFee']?.toDouble() ?? 0.0,
+      status: _statusFromString(map['status'] ?? 'upcoming'),
+      categories: List<String>.from(map['categories'] ?? []),
+      format: _formatFromString(map['format'] ?? 'singleElimination'),
+      mode: _modeFromString(map['mode'] ?? 'online'),
+      rules: map['rules'],
+      prizes: map['prizes'],
+      contactInfo: map['contactInfo'],
+      ticketTypes: Map<String, double>.from(map['ticketTypes'] ?? {}),
+      participantsCount: map['participantsCount'] ?? 0,
+      prizePool: map['prizePool']?.toDouble() ?? 0.0,
+      organizerPhotoUrl: map['organizerPhotoUrl'] ?? '',
+      organizerPastTournaments: map['organizerPastTournaments'] ?? 0,
+      startTime: map['startTime'] ?? '00:00',
+    );
+  }
+
+  // Helper methods to convert enums from strings
+  static TournamentStatus _statusFromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'upcoming':
+        return TournamentStatus.upcoming;
+      case 'ongoing':
+        return TournamentStatus.ongoing;
+      case 'completed':
+        return TournamentStatus.completed;
+      case 'cancelled':
+        return TournamentStatus.cancelled;
+      default:
+        return TournamentStatus.upcoming;
+    }
+  }
+
+  static TournamentFormat _formatFromString(String format) {
+    switch (format.toLowerCase()) {
+      case 'singleelimination':
+        return TournamentFormat.singleElimination;
+      case 'doubleelimination':
+        return TournamentFormat.doubleElimination;
+      case 'roundrobin':
+        return TournamentFormat.roundRobin;
+      case 'swiss':
+        return TournamentFormat.swiss;
+      default:
+        return TournamentFormat.singleElimination;
+    }
+  }
+
+  static TournamentMode _modeFromString(String mode) {
+    switch (mode.toLowerCase()) {
+      case 'online':
+        return TournamentMode.online;
+      case 'offline':
+        return TournamentMode.offline;
+      case 'hybrid':
+        return TournamentMode.hybrid;
+      default:
+        return TournamentMode.online;
+    }
+  }
 }
 
 // Enum representing the status of a tournament

@@ -8,6 +8,9 @@ import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/admin/admin_analytics_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/broadcast_message_screen.dart';
+import 'screens/organizer/organizer_login_page.dart';
+import 'screens/organizer/organizer_signup_page.dart';
+import 'screens/organizer/organizer_dashboard_screen.dart';
 import 'screens/users/user_login_page.dart';
 import 'screens/users/user_signup_page.dart';
 import 'screens/users/user_dashboard_page.dart';
@@ -48,6 +51,9 @@ class MyApp extends StatelessWidget {
         '/admin-analytics': (context) => const AdminAnalyticsScreen(),
         '/admin-users': (context) => const AdminUsersScreen(),
         '/admin-broadcast': (context) => const BroadcastMessageScreen(),
+        '/organizer-login': (context) => const OrganizerLoginPage(),
+        '/organizer-signup': (context) => const OrganizerSignupPage(),
+        '/organizer-dashboard': (context) => const OrganizerDashboardScreen(),
         '/user-login': (context) => const UserLoginPage(),
         '/user-signup': (context) => const UserSignupPage(),
         '/user-dashboard': (context) => const UserDashboardPage(),
@@ -98,23 +104,25 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 3), () {
       _checkSessionAndNavigate();
     });
-    
+
     // Also add immediate debug logging
     print('SplashScreen: Initialized, will check sessions in 3 seconds');
   }
 
   Future<void> _checkSessionAndNavigate() async {
     print('SplashScreen: Checking existing sessions...');
-    
+
     try {
       // Check if admin is logged in
       bool isAdminLoggedIn = await SessionService.isAdminLoggedIn();
       print('SplashScreen: Admin logged in: $isAdminLoggedIn');
-      
+
       if (isAdminLoggedIn) {
         final adminSession = await SessionService.getAdminSession();
-        print('SplashScreen: Admin session found for: ${adminSession['email']}');
-        
+        print(
+          'SplashScreen: Admin session found for: ${adminSession['email']}',
+        );
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/admin-dashboard');
         }
@@ -124,14 +132,35 @@ class _SplashScreenState extends State<SplashScreen> {
       // Check if user is logged in
       bool isUserLoggedIn = await SessionService.isUserLoggedIn();
       print('SplashScreen: User logged in: $isUserLoggedIn');
-      
+
       if (isUserLoggedIn) {
         final userSession = await SessionService.getUserSession();
         print('SplashScreen: User session found for: ${userSession['phone']}');
-        print('SplashScreen: Navigating via SESSION PERSISTENCE to user-dashboard');
-        
+        print(
+          'SplashScreen: Navigating via SESSION PERSISTENCE to user-dashboard',
+        );
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/user-dashboard');
+        }
+        return;
+      }
+
+      // Check if organizer is logged in
+      bool isOrganizerLoggedIn = await SessionService.isOrganizerLoggedIn();
+      print('SplashScreen: Organizer logged in: $isOrganizerLoggedIn');
+
+      if (isOrganizerLoggedIn) {
+        final organizerSession = await SessionService.getOrganizerSession();
+        print(
+          'SplashScreen: Organizer session found for: ${organizerSession['email']}',
+        );
+        print(
+          'SplashScreen: Navigating via SESSION PERSISTENCE to organizer-dashboard',
+        );
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/organizer-dashboard');
         }
         return;
       }
@@ -168,14 +197,14 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-  "VETRA",
-  textAlign: TextAlign.center,
-  style: TextStyle(
-    color: Colors.white,
-    fontSize: 26,
-    fontWeight: FontWeight.bold,
-  ),
-),
+              "VETRA",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
 
             const SizedBox(height: 15),
             // Typing animation text

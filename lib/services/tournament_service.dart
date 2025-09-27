@@ -18,13 +18,10 @@ class TournamentService {
     XFile? imageFile,
   }) async {
     try {
-      print('TournamentService: Creating tournament ${tournament.name}');
-
       // Upload image to Firebase Storage if provided
       String? imageUrl;
       if (imageFile != null) {
         imageUrl = await _uploadTournamentImage(tournament.id, imageFile);
-        print('TournamentService: Image uploaded successfully: $imageUrl');
       } else if (tournament.imageUrl != null &&
           tournament.imageUrl!.isNotEmpty) {
         // Use provided URL if no file is uploaded
@@ -37,12 +34,8 @@ class TournamentService {
       // Add tournament to Firestore
       await _tournamentsCollection.doc(tournament.id).set(tournamentData);
 
-      print(
-        'TournamentService: Tournament created successfully with ID: ${tournament.id}',
-      );
       return tournament.id;
     } catch (e) {
-      print('TournamentService: Error creating tournament: $e');
       throw Exception('Failed to create tournament: $e');
     }
   }
@@ -71,7 +64,6 @@ class TournamentService {
 
       return downloadUrl;
     } catch (e) {
-      print('TournamentService: Error uploading image: $e');
       throw Exception('Failed to upload image: $e');
     }
   }
@@ -92,6 +84,8 @@ class TournamentService {
           : null,
       'location': tournament.location,
       'organizer': tournament.organizer,
+      'organizerId': tournament.organizerId, // Add organizerId field
+      'organizerName': tournament.organizerName, // Add organizerName field
       'imageUrl': imageUrl,
       'maxParticipants': tournament.maxParticipants,
       'currentParticipants': tournament.currentParticipants,
@@ -103,6 +97,12 @@ class TournamentService {
       'rules': tournament.rules,
       'prizes': tournament.prizes,
       'contactInfo': tournament.contactInfo,
+      'ticketTypes': tournament.ticketTypes,
+      'participantsCount': tournament.participantsCount,
+      'prizePool': tournament.prizePool,
+      'organizerPhotoUrl': tournament.organizerPhotoUrl,
+      'organizerPastTournaments': tournament.organizerPastTournaments,
+      'startTime': tournament.startTime,
       'createdAt': Timestamp.now(),
       'updatedAt': Timestamp.now(),
     };
@@ -119,7 +119,6 @@ class TournamentService {
           .map((doc) => _mapToTournament(doc.data() as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('TournamentService: Error getting tournaments: $e');
       throw Exception('Failed to get tournaments: $e');
     }
   }
@@ -134,7 +133,6 @@ class TournamentService {
       }
       return null;
     } catch (e) {
-      print('TournamentService: Error getting tournament: $e');
       throw Exception('Failed to get tournament: $e');
     }
   }
@@ -146,10 +144,7 @@ class TournamentService {
       tournamentData['updatedAt'] = Timestamp.now();
 
       await _tournamentsCollection.doc(tournament.id).update(tournamentData);
-
-      print('TournamentService: Tournament updated successfully');
     } catch (e) {
-      print('TournamentService: Error updating tournament: $e');
       throw Exception('Failed to update tournament: $e');
     }
   }
@@ -158,9 +153,7 @@ class TournamentService {
   Future<void> deleteTournament(String id) async {
     try {
       await _tournamentsCollection.doc(id).delete();
-      print('TournamentService: Tournament deleted successfully');
     } catch (e) {
-      print('TournamentService: Error deleting tournament: $e');
       throw Exception('Failed to delete tournament: $e');
     }
   }
@@ -179,7 +172,6 @@ class TournamentService {
           .map((doc) => _mapToTournament(doc.data() as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('TournamentService: Error getting tournaments by status: $e');
       throw Exception('Failed to get tournaments by status: $e');
     }
   }
@@ -196,7 +188,6 @@ class TournamentService {
           .map((doc) => _mapToTournament(doc.data() as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('TournamentService: Error getting tournaments by category: $e');
       throw Exception('Failed to get tournaments by category: $e');
     }
   }
@@ -214,6 +205,8 @@ class TournamentService {
           : null,
       location: data['location'] ?? '',
       organizer: data['organizer'] ?? '',
+      organizerId: data['organizerId'] ?? '',
+      organizerName: data['organizerName'] ?? '',
       imageUrl: data['imageUrl'],
       maxParticipants: data['maxParticipants'] ?? 0,
       currentParticipants: data['currentParticipants'] ?? 0,
@@ -225,6 +218,12 @@ class TournamentService {
       rules: data['rules'],
       prizes: data['prizes'],
       contactInfo: data['contactInfo'],
+      ticketTypes: Map<String, double>.from(data['ticketTypes'] ?? {}),
+      participantsCount: data['participantsCount'] ?? 0,
+      prizePool: (data['prizePool'] ?? 0.0).toDouble(),
+      organizerPhotoUrl: data['organizerPhotoUrl'] ?? '',
+      organizerPastTournaments: data['organizerPastTournaments'] ?? 0,
+      startTime: data['startTime'] ?? '',
     );
   }
 
@@ -295,10 +294,7 @@ class TournamentService {
         'currentParticipants': newCount,
         'updatedAt': Timestamp.now(),
       });
-
-      print('TournamentService: Participant count updated');
     } catch (e) {
-      print('TournamentService: Error updating participant count: $e');
       throw Exception('Failed to update participant count: $e');
     }
   }
