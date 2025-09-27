@@ -1,104 +1,231 @@
-﻿import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/session_service.dart';
 
 class AuthService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Login a user by checking credentials in Firestore
-  Future<String?> loginUser(String mobileNo, String password) async {
+  // In-memory storage for users (for demo without Firebase)
+  static final List<Map<String, dynamic>> _users = [];
+
+  // Admin login - check credentials in admins collection
+  Future<Map<String, dynamic>> loginAdmin(String emailOrPhone, String password) async {
     try {
-      // Debug: Print the mobile number being searched
-      print('AuthService: Searching for user with mobile number: "$mobileNo"');
+      print('AuthService: Checking admin credentials for: $emailOrPhone');
       
-      // Find the user document where 'mobileNo' matches the input
-      final usersSnapshot = await _firestore
-          .collection('users')
-          .where('mobileNo', isEqualTo: mobileNo)
-          .limit(1)
-          .get();
-
-      print('AuthService: Found ${usersSnapshot.docs.length} users');
-
-      if (usersSnapshot.docs.isEmpty) {
-        return 'User not found.';
-      }
-
-      final userData = usersSnapshot.docs.first.data();
-      final storedPassword = userData['password'];
-
-      if (password == storedPassword) {
-        return null; // Login successful
+      // Try to find admin in Firestore admins collection
+      QuerySnapshot adminQuery;
+      
+      // Check if input is email or phone
+      if (emailOrPhone.contains('@')) {
+        adminQuery = await _firestore
+            .collection('admins')
+            .where('email', isEqualTo: emailOrPhone)
+            .where('password', isEqualTo: password)
+            .limit(1)
+            .get();
       } else {
-        return 'Invalid mobile number or password.';
+        adminQuery = await _firestore
+            .collection('admins')
+            .where('phone', isEqualTo: emailOrPhone)
+            .where('password', isEqualTo: password)
+            .limit(1)
+            .get();
       }
-    } on FirebaseException catch (e) {
-      return 'An error occurred. Please try again.';
+
+      if (adminQuery.docs.isNotEmpty) {
+        print('AuthService: Admin found in Firestore');
+        final adminData = adminQuery.docs.first.data() as Map<String, dynamic>;
+        
+        // Create admin session
+        await SessionService.createAdminSession(
+          adminId: adminQuery.docs.first.id,
+          email: adminData['email'] ?? emailOrPhone,
+          name: adminData['name'] ?? adminData['fullName'] ?? 'Admin',
+        );
+        
+        return {
+          'success': true,
+          'message': 'Login successful',
+          'data': adminData,
+        };
+      } else {
+        print('AuthService: Admin not found in Firestore');
+        return {
+          'success': false,
+          'message': 'Invalid email/phone or password',
+        };
+      }
     } catch (e) {
-      return 'An unexpected error occurred.';
+      print('AuthService: Error checking admin credentials: $e');
+      return {
+        'success': false,
+        'message': 'An error occurred. Please try again.',
+      };
     }
   }
 
-  // Register a new user and add them to the Firestore 'users' collection
-  Future<String?> registerUser(String name, String mobileNo, String password) async {
+  // User login - check credentials in users collection or in-memory
+  Future<Map<String, dynamic>> loginUser(String phoneNumber, String password) async {
     try {
-      // Check if a user with this mobile number already exists
-      final existingUser = await _firestore
-          .collection('users')
-          .where('mobileNo', isEqualTo: mobileNo)
-          .limit(1)
-          .get();
-
-      if (existingUser.docs.isNotEmpty) {
-        return 'A user with this mobile number already exists.';
-      }
-
-      // Debug: Print the mobile number being stored
-      print('AuthService: Registering user with mobile number: "$mobileNo"');
+      print('AuthService: Checking user credentials for: $phoneNumber');
       
-      // Add the new user to the 'users' collection
-      await _firestore.collection('users').add({
-        'name': name,
-        'mobileNo': mobileNo,
-        'password': password,
-        'isAdmin': false,
-      });
+      // First check in-memory users
+      for (var user in _users) {
+        if (user['phoneNumber'] == phoneNumber && user['password'] == password) {
+          print('AuthService: User found in memory');
+          
+          // Create user session
+          await SessionService.createUserSession(
+            userId: user['id'],
+            phoneNumber: user['phoneNumber'],
+            name: user['fullName'] ?? user['name'] ?? 'User',
+          );
+          
+          return {
+            'success': true,
+            'message': 'Login successful',
+            'data': user,
+          };
+        }
+      }
+      
+      // If not found in memory, try Firestore
+      try {
+        final userQuery = await _firestore
+            .collection('users')
+            .where('phoneNumber', isEqualTo: phoneNumber)
+            .where('password', isEqualTo: password)
+            .limit(1)
+            .get();
 
+        if (userQuery.docs.isNotEmpty) {
+          print('AuthService: User found in Firestore');
+          final userData = userQuery.docs.first.data() as Map<String, dynamic>;
+          
+          // Create user session
+          await SessionService.createUserSession(
+            userId: userQuery.docs.first.id,
+            phoneNumber: userData['phoneNumber'],
+            name: userData['fullName'] ?? userData['name'] ?? 'User',
+          );
+          
+          return {
+            'success': true,
+            'message': 'Login successful',
+            'data': userData,
+          };
+        }
+      } catch (firestoreError) {
+        print('AuthService: Firestore error, using memory only: $firestoreError');
+      }
+      
+      print('AuthService: User not found');
+      return {
+        'success': false,
+        'message': 'Invalid phone number or password',
+      };
+    } catch (e) {
+      print('AuthService: Error checking user credentials: $e');
+      return {
+        'success': false,
+        'message': 'An error occurred. Please try again.',
+      };
+    }
+  }
+
+  // User registration - simple in-memory storage
+  Future<String?> registerUser({
+    required String phoneNumber,
+    required String password,
+    String? email,
+    String? fullName,
+  }) async {
+    try {
+      print('AuthService: Registering user with phone: $phoneNumber');
+      
+      // Check if user already exists in memory
+      for (var user in _users) {
+        if (user['phoneNumber'] == phoneNumber) {
+          return 'Phone number already registered';
+        }
+        if (email != null && email.isNotEmpty && user['email'] == email) {
+          return 'Email already registered';
+        }
+      }
+      
+      // Check Firestore as well
+      try {
+        final existingUser = await _firestore
+            .collection('users')
+            .where('phoneNumber', isEqualTo: phoneNumber)
+            .limit(1)
+            .get();
+
+        if (existingUser.docs.isNotEmpty) {
+          return 'Phone number already registered';
+        }
+      } catch (firestoreError) {
+        print('AuthService: Firestore error, using memory only: $firestoreError');
+      }
+      
+      // Add user to in-memory storage
+      final newUser = {
+        'id': 'user_${DateTime.now().millisecondsSinceEpoch}',
+        'phoneNumber': phoneNumber,
+        'password': password,
+        'email': email,
+        'fullName': fullName,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+      
+      _users.add(newUser);
+      
+      // Try to save to Firestore as well
+      try {
+        await _firestore.collection('users').add(newUser);
+        print('AuthService: User saved to Firestore');
+      } catch (firestoreError) {
+        print('AuthService: Could not save to Firestore, saved in memory only');
+      }
+      
       print('AuthService: User registered successfully');
       return null; // Registration successful
-    } on FirebaseException catch (e) {
-      return 'Registration failed. Please try again.';
     } catch (e) {
-      return 'An unexpected error occurred.';
+      print('AuthService: Error registering user: $e');
+      return 'Registration failed. Please try again.';
     }
   }
 
-  // Check if a user is an admin by querying their document
-  Future<bool> isAdmin(String mobileNo) async {
-    try {
-      final usersSnapshot = await _firestore
-          .collection('users')
-          .where('mobileNo', isEqualTo: mobileNo)
-          .limit(1)
-          .get();
-
-      if (usersSnapshot.docs.isEmpty) {
-        return false;
-      }
-
-      final userData = usersSnapshot.docs.first.data();
-      return userData['isAdmin'] ?? false;
-    } on FirebaseException {
-      return false;
-    }
+  // Logout methods
+  Future<void> logoutAdmin() async {
+    await SessionService.clearAdminSession();
+    print('AuthService: Admin logged out');
   }
 
-  // Simple admin login using a hardcoded check
-  Future<String?> loginAdmin(String mobileNo, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
-    if (mobileNo == '9999999999' && password == 'admin123') {
-      return null; // Login successful
-    }
-    return 'Invalid mobile number or password';
+  Future<void> logoutUser() async {
+    await SessionService.clearUserSession();
+    print('AuthService: User logged out');
+  }
+
+  Future<void> logoutAll() async {
+    await SessionService.clearAllSessions();
+    print('AuthService: All sessions cleared');
+  }
+
+  // Session check methods
+  Future<bool> isAdminLoggedIn() async {
+    return await SessionService.isAdminLoggedIn();
+  }
+
+  Future<bool> isUserLoggedIn() async {
+    return await SessionService.isUserLoggedIn();
+  }
+
+  Future<Map<String, String?>> getCurrentAdminSession() async {
+    return await SessionService.getAdminSession();
+  }
+
+  Future<Map<String, String?>> getCurrentUserSession() async {
+    return await SessionService.getUserSession();
   }
 }

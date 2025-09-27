@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/tournament.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/image_upload_widget.dart';
+import '../../services/tournament_service.dart';
 
 class AddTournamentPage extends StatefulWidget {
   final Function(Tournament)? onTournamentCreated;
@@ -39,6 +40,9 @@ class _AddTournamentPageState extends State<AddTournamentPage>
   // Image handling
   XFile? _selectedImage;
   String _imageUrl = '';
+
+  // Tournament service
+  final TournamentService _tournamentService = TournamentService();
 
   final List<String> _availableCategories = [
     'E-Sports',
@@ -850,45 +854,43 @@ class _AddTournamentPageState extends State<AddTournamentPage>
     setState(() => _isLoading = true);
 
     try {
-      // Determine image URL - use uploaded image path or provided URL
-      String? finalImageUrl;
-      if (_selectedImage != null) {
-        // In a real app, you would upload the image to a server/cloud storage
-        // For now, we'll use a placeholder or the file path
-        finalImageUrl = _selectedImage!
-            .path; // This would be replaced with actual upload URL
-      } else if (_imageUrl.isNotEmpty) {
-        finalImageUrl = _imageUrl;
-      }
-
+      // Create tournament object
       final tournament = Tournament(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text,
-        description: _descriptionController.text,
-        location: _locationController.text,
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        location: _locationController.text.trim(),
         entryFee: double.parse(_entryFeeController.text),
         maxParticipants: int.parse(_maxParticipantsController.text),
         startDate: _startDate!,
         endDate: _endDate!,
         registrationDeadline: _registrationDeadline!,
-        imageUrl: finalImageUrl,
+        imageUrl: _imageUrl.isNotEmpty ? _imageUrl : null,
         status: TournamentStatus.upcoming,
-        organizer: _organizerController.text,
+        organizer: _organizerController.text.trim(),
         categories: _selectedCategories,
         format: _selectedFormat,
         mode: _selectedMode,
-        rules: _rulesController.text.isNotEmpty ? _rulesController.text : null,
+        rules: _rulesController.text.isNotEmpty
+            ? _rulesController.text.trim()
+            : null,
         prizes: _prizesController.text.isNotEmpty
-            ? _prizesController.text
+            ? _prizesController.text.trim()
             : null,
         contactInfo: _contactController.text.isNotEmpty
-            ? _contactController.text
+            ? _contactController.text.trim()
             : null,
       );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      // Create tournament using TournamentService
+      final tournamentId = await _tournamentService.createTournament(
+        tournament: tournament,
+        imageFile: _selectedImage,
+      );
 
+      print('Tournament created with ID: $tournamentId');
+
+      // Call callback if provided
       widget.onTournamentCreated?.call(tournament);
 
       if (mounted) {
@@ -896,7 +898,8 @@ class _AddTournamentPageState extends State<AddTournamentPage>
         Navigator.of(context).pop(tournament);
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to create tournament: $e');
+      print('Error creating tournament: $e');
+      _showErrorSnackBar('Failed to create tournament: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

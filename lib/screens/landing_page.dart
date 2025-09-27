@@ -11,41 +11,51 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
+  // Define a max width for consistent card sizing
+  static const double _cardMaxWidth = 350.0;
+  // Define a consistent padding for the cards
+  static const EdgeInsets _cardPadding = EdgeInsets.all(30);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              // New color scheme
-              Color(0xFF6f42c1),
-              Colors.white,
-            ],
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
+        // --- MODIFICATION 2: Add football background image with purple overlay ---
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            // Using Ronaldo image from assets as background
+            image: const AssetImage('assets/images/ronaldo.jpg'),
+            fit: BoxFit.cover,
+            // Apply the original purple color (0xFF6f42c1) as a dark overlay
+            colorFilter: ColorFilter.mode(
+                const Color(0xFF6f42c1).withOpacity(0.85), BlendMode.darken),
           ),
         ),
-        // We use a SingleChildScrollView to prevent the overflow.
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
-                  // Header Section
-                  _buildHeader(),
-                  const SizedBox(height: 80),
-                  // Options Section
-                  _buildAdminCard(context),
-                  const SizedBox(height: 40),
-                  _buildVisitorCard(context),
-                  const SizedBox(height: 40),
-                  // Footer
-                  _buildFooter(),
-                ],
-              ),
+        child: SafeArea(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            // --- MODIFICATION 1: Change main alignment to start and use Spacer to push footer down ---
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // Header Section (Now at the top)
+                _buildHeader(),
+                const SizedBox(height: 80), // Increased spacing to bring cards down
+                // Options Section
+                Column(
+                  children: [
+                    _buildAdminCard(context),
+                    const SizedBox(height: 20),
+                    _buildVisitorCard(context),
+                  ],
+                ),
+                const Spacer(), // Pushes the following element (Footer) to the bottom
+                // Footer
+                _buildFooter(),
+              ],
             ),
           ),
         ),
@@ -56,18 +66,33 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFF6f42c1), Color(0xFF563691)],
-          ).createShader(bounds),
-          child: const Text(
-            'VETRA',
-            style: TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+        // --- MODIFICATION: Replace Text logo with Image.asset logo ---
+        Container(
+          width: 140,
+          height: 140,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Image.asset(
+            'assets/Vetra_logo.png',
+            fit: BoxFit.contain,
+            // Fallback in case the asset is missing
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.sports_soccer, // Placeholder for the logo
+                size: 60,
+                color: Color(0xFF6f42c1),
+              );
+            },
           ),
         ),
         const SizedBox(height: 10),
@@ -87,7 +112,8 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildAdminCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 350),
+      // --- MODIFICATION 3: Set consistent max width (was 320) ---
+      constraints: const BoxConstraints(maxWidth: _cardMaxWidth),
       child: Card(
         elevation: 20,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -100,45 +126,57 @@ class _LandingPageState extends State<LandingPage> {
               colors: [Colors.white, Color(0xFFF8F9FA)],
             ),
           ),
-          padding: const EdgeInsets.all(30),
+          // --- MODIFICATION 3: Set consistent padding (was 24) ---
+          padding: _cardPadding,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF563691).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.admin_panel_settings,
-                  size: 50,
-                  color: Color(0xFF563691),
-                ),
+              // Icon and text in a row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6f42c1).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset(
+                      'assets/Vetra_logo.png',
+                      width: 26,
+                      height: 26,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Debug: Print error to console
+                        // print('Logo loading error: $error');
+                        return const Icon(
+                          Icons.admin_panel_settings,
+                          size: 26,
+                          color: Color(0xFF6f42c1),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  const Text(
+                    'Admin',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Tournament Admin',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'Manage tournaments, participants, and oversee all booking activities',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF7F8C8D),
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
+                height: 48, // Fixed height for consistency
                 child: ElevatedButton(
                   onPressed: () {
+                    // Replace to AdminLoginPage
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -147,9 +185,8 @@ class _LandingPageState extends State<LandingPage> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF563691),
+                    backgroundColor: const Color(0xFF6f42c1),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -157,7 +194,7 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                   child: const Text(
                     'Admin Login',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -171,7 +208,8 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildVisitorCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 350),
+      // --- MODIFICATION 3: Set consistent max width (already 350) ---
+      constraints: const BoxConstraints(maxWidth: _cardMaxWidth),
       child: Card(
         elevation: 20,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -184,39 +222,36 @@ class _LandingPageState extends State<LandingPage> {
               colors: [Colors.white, Color(0xFFF8F9FA)],
             ),
           ),
-          padding: const EdgeInsets.all(30),
+          // --- MODIFICATION 3: Set consistent padding (already 30) ---
+          padding: _cardPadding,
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF94c142).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.person,
-                  size: 50,
-                  color: Color(0xFF94c142),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Tournament Visitor',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'Browse tournaments, book slots, and participate in exciting competitions',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF7F8C8D),
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
+              // Icon and text in a row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6f42c1).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      size: 25,
+                      color: Color(0xFF6f42c1),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  const Text(
+                    'Visitor',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
               Row(
@@ -224,6 +259,7 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
+                        // Replace to UserLoginPage
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -232,9 +268,9 @@ class _LandingPageState extends State<LandingPage> {
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF94c142),
+                        foregroundColor: const Color(0xFF6f42c1),
                         side: const BorderSide(
-                          color: Color(0xFF94c142),
+                          color: Color(0xFF6f42c1),
                           width: 2,
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -255,6 +291,7 @@ class _LandingPageState extends State<LandingPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        // Replace to UserSignupPage
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -263,7 +300,7 @@ class _LandingPageState extends State<LandingPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF94c142),
+                        backgroundColor: const Color(0xFF6f42c1),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(

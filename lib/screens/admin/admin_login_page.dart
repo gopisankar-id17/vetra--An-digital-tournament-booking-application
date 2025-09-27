@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../auth_service.dart';
 import 'admin_dashboard_screen.dart';
 
 class AdminLoginPage extends StatefulWidget {
@@ -29,48 +29,55 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       });
 
       try {
-        // For demo purposes, using email/password authentication
-        final credential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            );
+        final authService = AuthService();
+        final result = await authService.loginAdmin(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
 
-        if (credential.user != null && mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminDashboardScreen(),
-            ),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
         setState(() {
           _isLoading = false;
         });
 
-        String message = 'Login failed. Please try again.';
-        if (e.code == 'user-not-found') {
-          message = 'No admin found for this email.';
-        } else if (e.code == 'wrong-password') {
-          message = 'Wrong password provided.';
-        } else if (e.code == 'invalid-email') {
-          message = 'Invalid email address.';
+        if (result['success'] == true) {
+          // Login successful
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message']),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboardScreen(),
+              ),
+            );
+          }
+        } else {
+          // Login failed
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message']),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
       } catch (e) {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An unexpected error occurred. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('An unexpected error occurred. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -78,8 +85,20 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
+      body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/sports.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black54, // Dark overlay for text readability
+              BlendMode.darken,
+            ),
+          ),
+        ),
+        child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -91,7 +110,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE74C3C),
+                    color: const Color(0xFF6f42c1),
                     borderRadius: BorderRadius.circular(60),
                   ),
                   child: const Icon(
@@ -107,7 +126,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   'Admin Login',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF2C3E50),
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -115,7 +134,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   'Sign in to access admin panel',
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
                 ),
                 const SizedBox(height: 32),
 
@@ -132,32 +151,27 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          // Email Field
+                          // Email/Phone Field
                           TextFormField(
                             controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
+                            keyboardType: TextInputType.text,
                             decoration: InputDecoration(
-                              labelText: 'Admin Email',
-                              hintText: 'Enter your admin email',
-                              prefixIcon: const Icon(Icons.email),
+                              labelText: 'Email or Phone',
+                              hintText: 'Enter your email or phone number',
+                              prefixIcon: const Icon(Icons.person),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFE74C3C),
+                                  color: Color(0xFF6f42c1),
                                 ),
                               ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!RegExp(
-                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                              ).hasMatch(value)) {
-                                return 'Please enter a valid email';
+                                return 'Please enter your email or phone number';
                               }
                               return null;
                             },
@@ -178,7 +192,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                  color: Color(0xFFE74C3C),
+                                  color: Color(0xFF6f42c1),
                                 ),
                               ),
                             ),
@@ -202,7 +216,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE74C3C),
+                                backgroundColor: const Color(0xFF6f42c1),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -234,29 +248,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                           const SizedBox(height: 16),
 
                           // Demo credentials info
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue.shade200),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Demo Admin Credentials:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2C3E50),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text('Email: admin@vetra.com'),
-                                Text('Password: admin123'),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -273,7 +264,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   child: const Text(
                     'Back to Home',
                     style: TextStyle(
-                      color: Color(0xFFE74C3C),
+                      color: Color(0xFF6f42c1),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -281,6 +272,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );
