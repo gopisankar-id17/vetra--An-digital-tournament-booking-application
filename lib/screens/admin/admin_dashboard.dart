@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../landing_page.dart';
 import 'tournaments_list_page.dart';
+import 'add_tournament_page.dart';
 import '../../auth_service.dart';
+import '../../models/tournament.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -218,6 +220,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddTournamentDialog,
+        backgroundColor: const Color(0xFFE74C3C),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('New Tournament'),
+        elevation: 6,
+      ),
     );
   }
 
@@ -280,6 +290,67 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showAddTournamentDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: MediaQuery.of(context).size.height * 0.85,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Dialog Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Create New Tournament',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                // Tournament Form Content
+                Expanded(
+                  child: AddTournamentPage(
+                    onTournamentCreated: (Tournament tournament) {
+                      Navigator.of(context).pop(); // Close dialog
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Tournament "${tournament.name}" created successfully!'),
+                          backgroundColor: const Color(0xFF2ECC71),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                      // Optionally refresh dashboard data here
+                      setState(() {
+                        // You can update dashboard stats here if needed
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
