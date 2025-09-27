@@ -33,7 +33,7 @@ class _AddTournamentPageState extends State<AddTournamentPage>
   DateTime? _startDate;
   DateTime? _endDate;
   DateTime? _registrationDeadline;
-  List<String> _selectedCategories = [];
+  String? _selectedCategory;
   TournamentFormat _selectedFormat = TournamentFormat.singleElimination;
   TournamentMode _selectedMode = TournamentMode.online;
 
@@ -46,23 +46,49 @@ class _AddTournamentPageState extends State<AddTournamentPage>
 
   final List<String> _availableCategories = [
     'E-Sports',
+    'Gaming',
     'Sports',
     'Academic',
-    'Creative',
     'Technology',
-    'Gaming',
+    'Creative',
     'Strategy',
     'Action',
-    'Team-based',
-    'Individual',
+    'Battle Royale',
+    'MOBA',
+    'FPS',
+    'Racing',
+    'Puzzle',
+    'Card Games',
+    'Board Games',
+    'Mobile Gaming',
+    'PC Gaming',
+    'Console Gaming',
     'PUBG Mobile',
     'Free Fire',
-    'Call of Duty',
+    'Call of Duty Mobile',
     'Valorant',
+    'Counter-Strike',
+    'League of Legends',
+    'Dota 2',
+    'Fortnite',
+    'Apex Legends',
     'Chess',
     'Cricket',
     'Football',
     'Basketball',
+    'Tennis',
+    'Badminton',
+    'Table Tennis',
+    'Swimming',
+    'Athletics',
+    'Coding Competition',
+    'Hackathon',
+    'Quiz Competition',
+    'Debate',
+    'Art Competition',
+    'Photography',
+    'Writing Competition',
+    'Music Competition',
   ];
 
   bool _isLoading = false;
@@ -561,7 +587,7 @@ class _AddTournamentPageState extends State<AddTournamentPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Tournament Categories',
+          'Tournament Category',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -569,48 +595,99 @@ class _AddTournamentPageState extends State<AddTournamentPage>
           ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _availableCategories.map((category) {
-            final isSelected = _selectedCategories.contains(category);
-            return FilterChip(
-              label: Text(
-                category,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppTheme.primaryColor,
-                  fontWeight: FontWeight.w500,
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+            color: Colors.white,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              hint: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Select Category',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
               ),
-              selected: isSelected,
-              onSelected: (selected) {
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              icon: Container(
+                margin: const EdgeInsets.only(right: 16),
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+              dropdownColor: Colors.white,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textDarkColor,
+              ),
+              items: _availableCategories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 2,
+                    ),
+                    child: Text(
+                      category,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textDarkColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                );
+              }).toList(),
+              selectedItemBuilder: (BuildContext context) {
+                return _availableCategories.map<Widget>((String value) {
+                  return Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textDarkColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  );
+                }).toList();
+              },
+              onChanged: (value) {
                 setState(() {
-                  if (selected) {
-                    _selectedCategories.add(category);
-                  } else {
-                    _selectedCategories.remove(category);
-                  }
+                  _selectedCategory = value;
                 });
               },
-              backgroundColor: Colors.white,
-              selectedColor: AppTheme.primaryColor,
-              checkmarkColor: Colors.white,
-              side: BorderSide(
-                color: isSelected
-                    ? AppTheme.primaryColor
-                    : Colors.grey.shade300,
-              ),
-            );
-          }).toList(),
-        ),
-        if (_selectedCategories.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text(
-              'Please select at least one category',
-              style: TextStyle(color: Colors.red, fontSize: 12),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select a tournament category';
+                }
+                return null;
+              },
+              isExpanded: true,
+              isDense: false,
+              menuMaxHeight: 400,
             ),
           ),
+        ),
       ],
     );
   }
@@ -806,7 +883,8 @@ class _AddTournamentPageState extends State<AddTournamentPage>
         return _nameController.text.isNotEmpty &&
             _descriptionController.text.isNotEmpty &&
             _organizerController.text.isNotEmpty &&
-            _selectedCategories.isNotEmpty;
+            _selectedCategory != null &&
+            _selectedCategory!.isNotEmpty;
       case 1:
         return _entryFeeController.text.isNotEmpty &&
             _maxParticipantsController.text.isNotEmpty &&
@@ -828,7 +906,8 @@ class _AddTournamentPageState extends State<AddTournamentPage>
         _startDate == null ||
         _endDate == null ||
         _registrationDeadline == null ||
-        _selectedCategories.isEmpty ||
+        _selectedCategory == null ||
+        _selectedCategory!.isEmpty ||
         (_selectedImage == null && _imageUrl.isEmpty)) {
       _showErrorSnackBar(
         'Please fill all required fields and select/upload an image',
@@ -868,7 +947,7 @@ class _AddTournamentPageState extends State<AddTournamentPage>
         imageUrl: _imageUrl.isNotEmpty ? _imageUrl : null,
         status: TournamentStatus.upcoming,
         organizer: _organizerController.text.trim(),
-        categories: _selectedCategories,
+        categories: _selectedCategory != null ? [_selectedCategory!] : [],
         format: _selectedFormat,
         mode: _selectedMode,
         rules: _rulesController.text.isNotEmpty
