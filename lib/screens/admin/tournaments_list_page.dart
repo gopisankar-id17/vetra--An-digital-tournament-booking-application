@@ -61,8 +61,7 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
           ),
         ),
         backgroundColor: Colors.white,
-        elevation: 2,
-        shadowColor: AppTheme.primaryColor.withOpacity(0.1),
+        elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.primaryColor),
         actions: [
           IconButton(
@@ -78,12 +77,18 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Add Tournament'),
+        elevation: 2,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _tournaments.isEmpty
-          ? _buildEmptyState()
-          : _buildTournamentsList(),
+      body: Container(
+        color: const Color(0xFFF8F9FA),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              )
+            : _tournaments.isEmpty
+            ? _buildEmptyState()
+            : _buildTournamentsList(),
+      ),
     );
   }
 
@@ -138,50 +143,65 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
   }
 
   Widget _buildTournamentCard(Tournament tournament) {
+    // Determine status styling
+    Color statusColor;
+    String statusLabel;
+    IconData statusIcon;
+
+    switch (tournament.status) {
+      case TournamentStatus.upcoming:
+        statusColor = const Color(0xFF3498DB);
+        statusLabel = 'UPCOMING';
+        statusIcon = Icons.schedule;
+        break;
+      case TournamentStatus.ongoing:
+        statusColor = const Color(0xFFE74C3C);
+        statusLabel = 'LIVE';
+        statusIcon = Icons.play_circle_filled;
+        break;
+      case TournamentStatus.completed:
+        statusColor = const Color(0xFF27AE60);
+        statusLabel = 'COMPLETED';
+        statusIcon = Icons.check_circle;
+        break;
+      case TournamentStatus.cancelled:
+        statusColor = Colors.red;
+        statusLabel = 'CANCELLED';
+        statusIcon = Icons.cancel;
+        break;
+    }
+
     return GestureDetector(
       onTap: () => _navigateToTournamentDetails(tournament),
-      child: Card(
+      child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tournament Image
-            if (tournament.imageUrl != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: Image.network(
-                  tournament.imageUrl!,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 150,
-                      color: Colors.grey[200],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              spreadRadius: 1,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with title and status
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tournament Name and Status
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
                           tournament.name,
                           style: const TextStyle(
                             fontSize: 18,
@@ -189,134 +209,148 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
                             color: AppTheme.textDarkColor,
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tournament.statusColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: tournament.statusColor,
-                            width: 1,
+                        const SizedBox(height: 4),
+                        Text(
+                          tournament.description,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textMediumColor,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: Text(
-                          tournament.status.name.toUpperCase(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 12, color: statusColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusLabel,
                           style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
                             fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: tournament.statusColor,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+              ),
 
-                  const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-                  // Description
-                  Text(
-                    tournament.description,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+              // Tournament details in a grid
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoItem(
+                      Icons.location_on,
+                      tournament.location,
+                      AppTheme.textMediumColor,
+                    ),
                   ),
+                  Expanded(
+                    child: _buildInfoItem(
+                      Icons.calendar_today,
+                      _formatDate(tournament.startDate),
+                      AppTheme.textMediumColor,
+                    ),
+                  ),
+                ],
+              ),
 
-                  const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-                  // Tournament Details
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 16,
-                        color: Colors.grey[600],
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoItem(
+                      Icons.people,
+                      '${tournament.currentParticipants}/${tournament.maxParticipants}',
+                      AppTheme.textMediumColor,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildInfoItem(
+                      Icons.attach_money,
+                      '₹${tournament.entryFee.toInt()}',
+                      AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Categories
+              if (tournament.categories.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: tournament.categories.take(4).map((category) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          tournament.location,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withOpacity(0.2),
                         ),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Row(
-                    children: [
-                      Icon(Icons.event, size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatDate(tournament.startDate),
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Row(
-                    children: [
-                      Icon(Icons.group, size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${tournament.currentParticipants}/${tournament.maxParticipants} participants',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '₹${tournament.entryFee.toInt()}',
+                      child: Text(
+                        category,
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                           color: AppTheme.primaryColor,
                         ),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Categories
-                  if (tournament.categories.isNotEmpty)
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: tournament.categories.take(3).map((category) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            category,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                ],
-              ),
-            ),
-          ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoItem(IconData icon, String text, Color textColor) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: textColor.withOpacity(0.7)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: textColor,
+              fontWeight: textColor == AppTheme.primaryColor
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
