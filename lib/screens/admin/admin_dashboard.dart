@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../landing_page.dart';
 import 'tournaments_list_page.dart';
 import 'add_tournament_page.dart';
+import 'tournament_details_demo.dart';
 import '../../auth_service.dart';
 import '../../models/tournament.dart';
 
@@ -74,13 +75,28 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 Icons.sports_soccer,
                 color: Color(0xFFE74C3C),
               ),
-              title: const Text('Manage Tournaments'),
+              title: const Text('Tournament Management'),
+              subtitle: const Text('Create, manage & track tournaments'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TournamentsListPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.visibility, color: Color(0xFF9B59B6)),
+              title: const Text('Demo Features'),
+              subtitle: const Text('View comprehensive tournament details'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TournamentDetailsDemo(),
                   ),
                 );
               },
@@ -123,11 +139,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 // Clear admin session
                 final authService = AuthService();
                 await authService.logoutAdmin();
-                
+
                 if (mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const LandingPage()),
+                    MaterialPageRoute(
+                      builder: (context) => const LandingPage(),
+                    ),
                     (route) => false,
                   );
                 }
@@ -163,6 +181,84 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 style: TextStyle(fontSize: 16, color: Color(0xFF7F8C8D)),
               ),
               const SizedBox(height: 16),
+
+              // Quick Action Buttons Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tournament Management',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionButton(
+                            'View All Tournaments',
+                            Icons.list,
+                            const Color(0xFF3498DB),
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TournamentsListPage(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildActionButton(
+                            'Demo Features',
+                            Icons.play_circle,
+                            const Color(0xFF9B59B6),
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TournamentDetailsDemo(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Dashboard Overview',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
               Expanded(
                 child: GridView.count(
                   crossAxisCount: 2,
@@ -174,42 +270,46 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       '12',
                       Icons.sports_soccer,
                       const Color(0xFF3498DB),
-                      () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tournament management coming soon!'),
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TournamentsListPage(),
                         ),
                       ),
                     ),
                     _buildDashboardCard(
-                      'Users',
+                      'Participants',
                       '245',
                       Icons.people,
                       const Color(0xFF2ECC71),
-                      () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('User management coming soon!'),
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TournamentsListPage(),
                         ),
                       ),
                     ),
                     _buildDashboardCard(
-                      'Bookings',
-                      '89',
-                      Icons.event_note,
+                      'Active Matches',
+                      '8',
+                      Icons.sports_esports,
                       const Color(0xFFF39C12),
-                      () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Booking management coming soon!'),
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TournamentsListPage(),
                         ),
                       ),
                     ),
                     _buildDashboardCard(
-                      'Revenue',
-                      '₹45,670',
-                      Icons.attach_money,
+                      'Demo Features',
+                      'View',
+                      Icons.visibility,
                       const Color(0xFF9B59B6),
-                      () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Revenue reports coming soon!'),
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TournamentDetailsDemo(),
                         ),
                       ),
                     ),
@@ -220,13 +320,32 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddTournamentDialog,
-        backgroundColor: const Color(0xFFE74C3C),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New Tournament'),
-        elevation: 6,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: "tournament_list",
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TournamentsListPage(),
+              ),
+            ),
+            backgroundColor: const Color(0xFF3498DB),
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.list),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton.extended(
+            heroTag: "new_tournament",
+            onPressed: _showAddTournamentDialog,
+            backgroundColor: const Color(0xFFE74C3C),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('New Tournament'),
+            elevation: 6,
+          ),
+        ],
       ),
     );
   }
@@ -293,6 +412,29 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 18),
+      label: Text(
+        title,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 2,
+      ),
+    );
+  }
+
   void _showAddTournamentDialog() {
     showDialog(
       context: context,
@@ -334,7 +476,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       Navigator.of(context).pop(); // Close dialog
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Tournament "${tournament.name}" created successfully!'),
+                          content: Text(
+                            'Tournament "${tournament.name}" created successfully!',
+                          ),
                           backgroundColor: const Color(0xFF2ECC71),
                           duration: const Duration(seconds: 3),
                         ),

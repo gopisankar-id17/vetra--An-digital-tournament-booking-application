@@ -16,7 +16,6 @@ class _BroadcastMessageScreenState extends State<BroadcastMessageScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Controller for the message form
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
 
