@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../landing_page.dart'; // Assuming this path is correct
+import '../../auth_service.dart';
 
 class UserDashboardPage extends StatefulWidget {
   const UserDashboardPage({super.key});
@@ -74,6 +75,38 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
         backgroundColor: const Color(0xFF6f42c1),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: () {
+                _showProfileMenu(context);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.white,
+                  backgroundImage: const AssetImage('assets/images/ronaldo.jpg'), // You can change this to user's actual profile image
+                  onBackgroundImageError: (exception, stackTrace) {
+                    // Image will fall back to child icon
+                  },
+                  child: const Icon(
+                    Icons.person,
+                    size: 20,
+                    color: Color(0xFF6f42c1),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -161,7 +194,11 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout'),
-              onTap: () {
+              onTap: () async {
+                // Clear user session
+                final authService = AuthService();
+                await authService.logoutUser();
+                
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LandingPage()),
@@ -526,6 +563,112 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   void _showComingSoonSnackbar(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$feature coming soon!')),
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Profile header
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: const Color(0xFF6f42c1).withOpacity(0.1),
+                    backgroundImage: const AssetImage('assets/images/ronaldo.jpg'),
+                    onBackgroundImageError: (exception, stackTrace) {},
+                    child: const Icon(
+                      Icons.person,
+                      size: 30,
+                      color: Color(0xFF6f42c1),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'John Doe',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                        Text(
+                          'Tournament Enthusiast',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF7F8C8D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Menu items
+              ListTile(
+                leading: const Icon(Icons.person_outline, color: Color(0xFF6f42c1)),
+                title: const Text('Edit Profile'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showComingSoonSnackbar(context, 'Profile editing');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings_outlined, color: Color(0xFF6f42c1)),
+                title: const Text('Settings'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showComingSoonSnackbar(context, 'Settings');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.help_outline, color: Color(0xFF6f42c1)),
+                title: const Text('Help & Support'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showComingSoonSnackbar(context, 'Help & Support');
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text('Logout', style: TextStyle(color: Colors.red)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  
+                  // Clear user session
+                  final authService = AuthService();
+                  await authService.logoutUser();
+                  
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LandingPage()),
+                    (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -944,44 +1087,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
-  Widget _buildTrendingTournamentTile(BuildContext context, String title, String status, IconData icon, Color color) {
-    return GestureDetector(
-      onTap: () => _showComingSoonSnackbar(context, 'Viewing trending tournament $title'),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: color.withOpacity(0.1),
-            child: Icon(icon, color: color),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
-          ),
-          trailing: Chip(
-            label: Text(
-              status,
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
-            ),
-            backgroundColor: color,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildStatCard(String label, String value, IconData icon) {
     return Column(
@@ -1014,35 +1120,5 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
-  Widget _buildQuickActionButton(String label, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: const Color(0xFF6f42c1),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+
 }

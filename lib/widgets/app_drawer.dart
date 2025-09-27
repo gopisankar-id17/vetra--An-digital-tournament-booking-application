@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../utils/app_theme.dart';
+import '../auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
   final User user;
@@ -279,8 +280,23 @@ class AppDrawer extends StatelessWidget {
                         child: const Text('Cancel'),
                       ),
                       ElevatedButton(
-                        onPressed: () {
-                          // For now just go back to landing page
+                        onPressed: () async {
+                          print('AppDrawer: Logout button pressed');
+                          print('AppDrawer: User isAdmin: ${user.isAdmin}');
+                          Navigator.pop(context); // Close dialog first
+                          
+                          // Clear appropriate session based on user type
+                          final authService = AuthService();
+                          if (user.isAdmin) {
+                            print('AppDrawer: Calling logoutAdmin');
+                            await authService.logoutAdmin();
+                          } else {
+                            print('AppDrawer: Calling logoutUser');
+                            await authService.logoutUser();
+                          }
+                          
+                          print('AppDrawer: Navigating to landing page');
+                          // Navigate to landing page
                           Navigator.pushNamedAndRemoveUntil(
                             context,
                             '/',

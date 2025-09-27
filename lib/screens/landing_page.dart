@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/session_service.dart';
 import 'admin/admin_login_page.dart';
 import 'users/user_login_page.dart';
 import 'users/user_signup_page.dart';
@@ -17,27 +18,54 @@ class _LandingPageState extends State<LandingPage> {
   static const EdgeInsets _cardPadding = EdgeInsets.all(30);
 
   @override
+  void initState() {
+    super.initState();
+    // Check for existing sessions when landing page loads
+    _checkExistingSessions();
+  }
+
+  Future<void> _checkExistingSessions() async {
+    try {
+      // Check if admin is already logged in
+      final isAdmin = await SessionService.isAdminLoggedIn();
+      if (isAdmin && mounted) {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        return;
+      }
+
+      // Check if user is already logged in
+      final isUser = await SessionService.isUserLoggedIn();
+      if (isUser && mounted) {
+        Navigator.pushReplacementNamed(context, '/user-dashboard');
+        return;
+      }
+    } catch (e) {
+      print('LandingPage: Error checking sessions: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: MediaQuery.of(context).size.height,
-        // --- MODIFICATION 2: Add football background image with purple overlay ---
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            // Using Ronaldo image from assets as background
-            image: const AssetImage('assets/images/ronaldo.jpg'),
-            fit: BoxFit.cover,
-            // Apply the original purple color (0xFF6f42c1) as a dark overlay
-            colorFilter: ColorFilter.mode(
-                const Color(0xFF6f42c1).withOpacity(0.85), BlendMode.darken),
+        // New Purple gradient background
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF6A1B9A), // Medium Purple
+              Color(0xFF4A148C), // Deep Purple
+              Color(0xFF311B92), // Deeper Indigo/Purple
+            ],
           ),
         ),
         child: SafeArea(
           child: Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-            // --- MODIFICATION 1: Change main alignment to start and use Spacer to push footer down ---
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -66,7 +94,6 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // --- MODIFICATION: Replace Text logo with Image.asset logo ---
         Container(
           width: 140,
           height: 140,
@@ -76,9 +103,9 @@ class _LandingPageState extends State<LandingPage> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -100,7 +127,7 @@ class _LandingPageState extends State<LandingPage> {
           'Digital Tournament Booking Platform',
           style: TextStyle(
             fontSize: 18,
-            color: Colors.white70,
+            color: Colors.white,
             fontWeight: FontWeight.w300,
           ),
           textAlign: TextAlign.center,
@@ -109,13 +136,12 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  Widget _buildAdminCard(BuildContext context) {
+Widget _buildAdminCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      // --- MODIFICATION 3: Set consistent max width (was 320) ---
       constraints: const BoxConstraints(maxWidth: _cardMaxWidth),
       child: Card(
-        elevation: 20,
+        elevation: 25,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
@@ -126,7 +152,6 @@ class _LandingPageState extends State<LandingPage> {
               colors: [Colors.white, Color(0xFFF8F9FA)],
             ),
           ),
-          // --- MODIFICATION 3: Set consistent padding (was 24) ---
           padding: _cardPadding,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -149,8 +174,6 @@ class _LandingPageState extends State<LandingPage> {
                       height: 26,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        // Debug: Print error to console
-                        // print('Logo loading error: $error');
                         return const Icon(
                           Icons.admin_panel_settings,
                           size: 26,
@@ -173,11 +196,10 @@ class _LandingPageState extends State<LandingPage> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 48, // Fixed height for consistency
+                // height: 48, // REMOVED fixed height
                 child: ElevatedButton(
                   onPressed: () {
-                    // Replace to AdminLoginPage
-                    Navigator.pushReplacement(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AdminLoginPage(),
@@ -187,10 +209,12 @@ class _LandingPageState extends State<LandingPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6f42c1),
                     foregroundColor: Colors.white,
+                    // ADDED padding for consistent height
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    elevation: 10,
+                    elevation: 12,
                   ),
                   child: const Text(
                     'Admin Login',
@@ -208,10 +232,9 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildVisitorCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      // --- MODIFICATION 3: Set consistent max width (already 350) ---
       constraints: const BoxConstraints(maxWidth: _cardMaxWidth),
       child: Card(
-        elevation: 20,
+        elevation: 25,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           decoration: BoxDecoration(
@@ -222,7 +245,6 @@ class _LandingPageState extends State<LandingPage> {
               colors: [Colors.white, Color(0xFFF8F9FA)],
             ),
           ),
-          // --- MODIFICATION 3: Set consistent padding (already 30) ---
           padding: _cardPadding,
           child: Column(
             children: [
@@ -260,12 +282,12 @@ class _LandingPageState extends State<LandingPage> {
                     child: OutlinedButton(
                       onPressed: () {
                         // Replace to UserLoginPage
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const UserLoginPage(),
-                          ),
-                        );
+                        Navigator.push( // 👈 CHANGE HERE
+  context,
+  MaterialPageRoute(
+    builder: (context) => const UserLoginPage(),
+  ),
+);
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF6f42c1),
@@ -292,12 +314,12 @@ class _LandingPageState extends State<LandingPage> {
                     child: ElevatedButton(
                       onPressed: () {
                         // Replace to UserSignupPage
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const UserSignupPage(),
-                          ),
-                        );
+                        Navigator.push( // 👈 CHANGE HERE
+  context,
+  MaterialPageRoute(
+    builder: (context) => const UserSignupPage(),
+  ),
+);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6f42c1),
@@ -306,7 +328,7 @@ class _LandingPageState extends State<LandingPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        elevation: 10,
+                        elevation: 12,
                       ),
                       child: const Text(
                         'Sign Up',
@@ -330,7 +352,7 @@ class _LandingPageState extends State<LandingPage> {
     return const Text(
       'Choose your role to get started',
       style: TextStyle(
-        color: Colors.white70,
+        color: Colors.white,
         fontSize: 16,
         fontWeight: FontWeight.w300,
       ),
