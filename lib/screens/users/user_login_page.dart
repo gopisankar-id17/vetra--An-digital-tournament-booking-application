@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth_service.dart';
 
 class UserLoginPage extends StatefulWidget {
@@ -67,29 +66,26 @@ class _UserLoginPageState extends State<UserLoginPage> {
     });
 
     try {
-      final loginError = await _auth.loginUser(mobileNo, password);
+      final result = await _auth.loginUser(mobileNo, password);
 
-      if (loginError != null) {
-        _showSnackBar(context, loginError);
-        return;
-      }
+      setState(() {
+        _isLoading = false;
+      });
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_token', mobileNo);
-      
-      _showSnackBar(context, 'User Login Successful!');
-      
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/user-dashboard');
+      if (result['success'] == true) {
+        _showSnackBar(context, result['message']);
+        
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/user-dashboard');
+        }
+      } else {
+        _showSnackBar(context, result['message']);
       }
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       _showSnackBar(context, 'Login failed. Please try again.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 

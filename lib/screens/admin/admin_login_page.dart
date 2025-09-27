@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../auth_service.dart';
 import 'admin_dashboard_screen.dart';
 
 class AdminLoginPage extends StatefulWidget {
@@ -29,48 +29,55 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       });
 
       try {
-        // For demo purposes, using email/password authentication
-        final credential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            );
+        final authService = AuthService();
+        final result = await authService.loginAdmin(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
 
-        if (credential.user != null && mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminDashboardScreen(),
-            ),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
         setState(() {
           _isLoading = false;
         });
 
-        String message = 'Login failed. Please try again.';
-        if (e.code == 'user-not-found') {
-          message = 'No admin found for this email.';
-        } else if (e.code == 'wrong-password') {
-          message = 'Wrong password provided.';
-        } else if (e.code == 'invalid-email') {
-          message = 'Invalid email address.';
+        if (result['success'] == true) {
+          // Login successful
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message']),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboardScreen(),
+              ),
+            );
+          }
+        } else {
+          // Login failed
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message']),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
       } catch (e) {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An unexpected error occurred. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('An unexpected error occurred. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -144,14 +151,14 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          // Email Field
+                          // Email/Phone Field
                           TextFormField(
                             controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
+                            keyboardType: TextInputType.text,
                             decoration: InputDecoration(
-                              labelText: 'Admin Email',
-                              hintText: 'Enter your admin email',
-                              prefixIcon: const Icon(Icons.email),
+                              labelText: 'Email or Phone',
+                              hintText: 'Enter your email or phone number',
+                              prefixIcon: const Icon(Icons.person),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -164,12 +171,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!RegExp(
-                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                              ).hasMatch(value)) {
-                                return 'Please enter a valid email';
+                                return 'Please enter your email or phone number';
                               }
                               return null;
                             },
@@ -246,29 +248,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                           const SizedBox(height: 16),
 
                           // Demo credentials info
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue.shade200),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Demo Admin Credentials:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6f42c1),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text('Email: admin@vetra.com'),
-                                Text('Password: admin123'),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
