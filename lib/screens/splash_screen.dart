@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import '../utils/app_theme.dart';
-import 'landing_page.dart';
+import '../services/route_guard.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -14,52 +12,35 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _rotateAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
     );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _rotateAnimation = Tween<double>(begin: 0.0, end: 2.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeInOut),
-      ),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    ));
 
     _animationController.forward();
+    _checkSessionAndNavigate();
+  }
 
-    Timer(const Duration(seconds: 3), () {
+  _checkSessionAndNavigate() async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (mounted) {
+      final initialRoute = await RouteGuard.getInitialRoute();
       Navigator.pushReplacement(
         context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const LandingPage(),
-          transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
+        MaterialPageRoute(builder: (context) => initialRoute),
       );
-    });
+    }
   }
 
   @override
@@ -71,148 +52,66 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primary,
+      backgroundColor: const Color(0xFF6f42c1),
       body: Center(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo animation
-                Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: Transform.rotate(
-                    angle: _rotateAnimation.value * 0.3, // Subtle rotation
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Container(
-                        width: 150,
-                        height: 150,
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Image.asset(
-                          'assets/Vetra_logo.png',
-                          width: 120,
-                          height: 120,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.emoji_events,
-                              size: 80,
-                              color: AppTheme.primary,
-                            );
-                          },
-                        ),
-                      ),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo
+              Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(75),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 5,
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 40),
-                // App name with fade animation
-                FadeTransition(
-                  opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: _animationController,
-                      curve: const Interval(0.3, 0.8, curve: Curves.easeIn),
-                    ),
-                  ),
-                  child: const Text(
-                    'VETRA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 8,
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.sports_tennis,
+                  size: 80,
+                  color: Color(0xFF6f42c1),
                 ),
-                const SizedBox(height: 8),
-                // Tagline with delayed fade
-                FadeTransition(
-                  opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: _animationController,
-                      curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
-                    ),
-                  ),
-                  child: const Text(
-                    'Tournament Booking Platform',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                      letterSpacing: 1,
-                    ),
-                  ),
+              ),
+              const SizedBox(height: 30),
+              // App Name
+              const Text(
+                'VETRA',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 3,
                 ),
-                const SizedBox(height: 60),
-                // Loading indicator with delayed animation
-                FadeTransition(
-                  opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: _animationController,
-                      curve: const Interval(0.7, 1.0, curve: Curves.easeIn),
-                    ),
-                  ),
-                  child: _buildLoadingIndicator(),
+              ),
+              const SizedBox(height: 10),
+              // Tagline
+              const Text(
+                'Tournament Booking Made Easy',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w300,
                 ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    return Column(
-      children: [
-        SizedBox(
-          width: 40,
-          height: 40,
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Colors.white.withOpacity(0.8),
-            ),
-            strokeWidth: 3,
+              ),
+              const SizedBox(height: 50),
+              // Loading indicator
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                strokeWidth: 3,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-        _buildProgressText(),
-      ],
-    );
-  }
-
-  Widget _buildProgressText() {
-    // Text that changes during the animation
-    final List<String> loadingTexts = [
-      'Initializing...',
-      'Loading tournaments...',
-      'Almost there...',
-    ];
-
-    // Use a tween sequence for progress text
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        String text = '';
-        double progress = _animationController.value;
-
-        if (progress < 0.3) {
-          text = loadingTexts[0];
-        } else if (progress < 0.7) {
-          text = loadingTexts[1];
-        } else {
-          text = loadingTexts[2];
-        }
-
-        return Text(
-          text,
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
-        );
-      },
+      ),
     );
   }
 }
