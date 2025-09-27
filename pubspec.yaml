@@ -46,6 +46,8 @@ dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
+  intl: ^0.20.2
+  table_calendar: ^3.2.0
 
 
 

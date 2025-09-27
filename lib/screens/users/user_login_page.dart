@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../auth_service.dart';
-
+import 'package:vetra/screens/users/user_dashboard_page.dart';
 class UserLoginPage extends StatefulWidget {
   const UserLoginPage({Key? key}) : super(key: key);
 
@@ -70,7 +70,10 @@ class _UserLoginPageState extends State<UserLoginPage> {
 
         if (result['success'] == true) {
           _showSnackBar(context, result['message'], isError: false);
-          Navigator.of(context).pushReplacementNamed('/user-dashboard');
+           Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const UserDashboardPage()),
+        );
         } else {
           _showSnackBar(context, result['message'], isError: true);
         }
