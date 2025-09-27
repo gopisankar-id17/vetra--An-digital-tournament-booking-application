@@ -101,6 +101,14 @@ class AppDrawer extends StatelessWidget {
                         title: 'Reports',
                         icon: Icons.summarize,
                       ),
+
+                      // --- THIS IS THE NEWLY ADDED ITEM ---
+                      _buildDrawerItem(
+                        context,
+                        index: 9, // Using index 9 as established
+                        title: 'YouTube Videos',
+                        icon: Icons.video_library,
+                      ),
                     ],
 
                     const Divider(),
@@ -130,6 +138,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  // ... (rest of your existing methods remain the same)
   Widget _buildDrawerHeader(BuildContext context) {
     return DrawerHeader(
       decoration: const BoxDecoration(

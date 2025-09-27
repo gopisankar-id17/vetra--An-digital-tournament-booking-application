@@ -10,7 +10,7 @@ import 'add_tournament_page.dart';
 import 'tournament_details_page.dart';
 import 'tournaments_list_page.dart';
 import 'tournament_requests_page.dart';
-
+import 'package:vetra/screens/admin/add_video_page.dart'; // Adjust the path as per your project structure
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -199,61 +199,403 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return 'Profile';
       case 8:
         return 'Settings';
+        case 9: // Add this case
+      return 'YouTube Videos';
       default:
         return 'Admin Dashboard';
     }
   }
 
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildDashboardContent();
-      case 1:
-        return _buildTournamentsContent();
-      case 2:
-        return TournamentRequestsPage(key: ValueKey(_refreshCounter));
-      case 3:
-        return _buildNotificationsContent();
-      case 4:
-        // Redirect to the Users screen, but use push instead of pushReplacement
-        // to allow navigation back to the dashboard
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushNamed(context, '/admin-users');
-          // Reset the selected index to dashboard to avoid re-navigating
-          // when returning from the users screen
-          setState(() {
-            _selectedIndex = 0;
-          });
-        });
-        return const Center(child: CircularProgressIndicator());
-      case 5:
-        // Redirect to the Analytics screen, but use push instead of pushReplacement
-        // to allow navigation back to the dashboard
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushNamed(context, '/admin-analytics');
-          // Reset the selected index to dashboard to avoid re-navigating
-          // when returning from the analytics screen
-          setState(() {
-            _selectedIndex = 0;
-          });
-        });
-        return const Center(child: CircularProgressIndicator());
-      case 6:
-        return _buildReportsContent();
-      case 7:
-        return _buildProfileContent();
-      case 8:
-        return _buildSettingsContent();
-      default:
-        return Center(
-          child: Text(
-            '${_getScreenTitle()} - Coming Soon',
-            style: const TextStyle(fontSize: 18),
+Widget _buildBody() {
+  switch (_selectedIndex) {
+    case 0:
+      return _buildDashboardContent();
+    case 1:
+      return _buildTournamentsContent();
+    case 2:
+      return TournamentRequestsPage(key: ValueKey(_refreshCounter));
+    case 3:
+      return _buildNotificationsContent();
+    case 4:
+      // ... (code for case 4)
+      return const Center(child: CircularProgressIndicator());
+    case 5:
+      // ... (code for case 5)
+      return const Center(child: CircularProgressIndicator());
+    case 6:
+      return _buildReportsContent();
+    case 7:
+      return _buildProfileContent();
+    case 8:
+      return _buildSettingsContent();
+    case 9:
+      return const AddVideoPage();  // This is the correct page.
+    // REMOVED case 10
+    default:
+      return Center(
+        child: Text(
+          '${_getScreenTitle()} - Coming Soon',
+          style: const TextStyle(fontSize: 18),
+        ),
+      );
+  }
+}
+Widget _buildYouTubeVideosContent() {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        const Text(
+          'YouTube Videos',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Manage tournament highlight videos from YouTube',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const SizedBox(height: 24),
+        
+        // Add YouTube URL Card
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.add_link, color: Colors.red, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Add YouTube Video',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Paste YouTube video URL to add tournament highlights, tutorials, or promotional content.',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                
+                // YouTube URL Input Form
+                _buildYouTubeUrlForm(),
+              ],
+            ),
           ),
-        );
-    }
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // Existing Videos Section
+        const Text(
+          'Existing Videos',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        
+        // Videos List
+        _buildVideosList(),
+      ],
+    ),
+  );
+}
+
+Widget _buildYouTubeUrlForm() {
+  return Column(
+    children: [
+      TextFormField(
+        decoration: InputDecoration(
+          labelText: 'YouTube Video URL',
+          hintText: 'https://www.youtube.com/watch?v=...',
+          prefixIcon: const Icon(Icons.link, color: Colors.red),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          filled: true,
+          fillColor: Colors.grey[50],
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter a YouTube URL';
+          }
+          if (!value.contains('youtube.com') && !value.contains('youtu.be')) {
+            return 'Please enter a valid YouTube URL';
+          }
+          return null;
+        },
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            // Handle YouTube URL submission
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('YouTube video URL submitted successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          },
+          icon: const Icon(Icons.add, size: 20),
+          label: const Text('Add Video'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildVideosList() {
+  // Sample video data - you'll replace this with actual data from your database
+  final List<Map<String, String>> sampleVideos = [
+    {
+      'title': 'Tournament Highlights 2024',
+      'url': 'https://youtube.com/watch?v=abc123',
+      'thumbnail': 'https://img.youtube.com/vi/abc123/hqdefault.jpg',
+      'date': '2024-01-15',
+    },
+    {
+      'title': 'Championship Finals',
+      'url': 'https://youtube.com/watch?v=def456',
+      'thumbnail': 'https://img.youtube.com/vi/def456/hqdefault.jpg',
+      'date': '2024-01-10',
+    },
+    {
+      'title': 'Player Interviews',
+      'url': 'https://youtube.com/watch?v=ghi789',
+      'thumbnail': 'https://img.youtube.com/vi/ghi789/hqdefault.jpg',
+      'date': '2024-01-05',
+    },
+  ];
+
+  if (sampleVideos.isEmpty) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          children: [
+            Icon(Icons.video_library, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            const Text(
+              'No videos added yet',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add your first YouTube video using the form above',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
+  return ListView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: sampleVideos.length,
+    itemBuilder: (context, index) {
+      final video = sampleVideos[index];
+      return Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: ListTile(
+          leading: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              image: DecorationImage(
+                image: NetworkImage(video['thumbnail']!),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: const Icon(Icons.play_arrow, color: Colors.white, size: 30),
+          ),
+          title: Text(
+            video['title']!,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text('Added on ${video['date']}'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.visibility, color: Colors.blue),
+                onPressed: () {
+                  // View video action
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Opening: ${video['title']}')),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  // Delete video action
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Deleting: ${video['title']}')),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+Widget _buildAddVideoContent() {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 0; // Go back to dashboard
+                });
+              },
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Add Video',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        
+        // Video upload card
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                const Icon(Icons.video_library, size: 80, color: Colors.blueGrey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Upload Tournament Video',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Share tournament highlights, tutorials, or promotional videos',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+                const SizedBox(height: 24),
+                
+                // Upload options
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildUploadOption(
+                      icon: Icons.upload_file,
+                      label: 'Upload File',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('File upload functionality coming soon!')),
+                        );
+                      },
+                    ),
+                    _buildUploadOption(
+                      icon: Icons.link,
+                      label: 'YouTube URL',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('YouTube URL integration coming soon!')),
+                        );
+                      },
+                    ),
+                    _buildUploadOption(
+                      icon: Icons.cloud_upload,
+                      label: 'Cloud Import',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Cloud import functionality coming soon!')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Recent videos section
+                const Divider(),
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Recent Videos',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Center(
+                  child: Text(
+                    'No videos uploaded yet',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildUploadOption({
+  required IconData icon,
+  required String label,
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey[50],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 30, color: Colors.blueGrey[700]),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: Colors.blueGrey[700],
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildDashboardContent() {
     if (_isLoadingTournaments) {
       return const Center(
