@@ -171,6 +171,12 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
         break;
     }
 
+    // Debug print the image URL
+    if (tournament.imageUrl != null && tournament.imageUrl!.isNotEmpty) {
+      print('Tournament: ${tournament.name}');
+      print('Image URL: ${tournament.imageUrl}');
+    }
+
     return GestureDetector(
       onTap: () => _navigateToTournamentDetails(tournament),
       child: Container(
@@ -187,146 +193,321 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and status
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tournament Image Section (if available)
+            if (tournament.imageUrl != null && tournament.imageUrl!.isNotEmpty)
+              Container(
+                height: 180,
+                width: double.infinity,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Tournament Image with direct network loading
+                      Image.network(
+                        tournament.imageUrl!,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) {
+                            print(
+                              '✅ Image loaded successfully for: ${tournament.name}',
+                            );
+                            return child;
+                          }
+
+                          final progress =
+                              loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                              : null;
+
+                          print(
+                            '📥 Loading image for ${tournament.name}: ${(progress ?? 0) * 100}%',
+                          );
+
+                          return Container(
+                            height: 180,
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: AppTheme.primaryColor,
+                                    value: progress,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Loading: ${((progress ?? 0) * 100).toInt()}%',
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          print(
+                            '❌ Image loading failed for: ${tournament.name}',
+                          );
+                          print('🔗 URL: ${tournament.imageUrl}');
+                          print('📝 Error: $error');
+
+                          return Container(
+                            height: 180,
+                            color: Colors.grey[100],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 48,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Image not available',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    'Check Firebase Storage permissions',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 10,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    tournament.name,
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      // Status Badge Overlay
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(statusIcon, size: 12, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                statusLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Content Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tournament.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textDarkColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          tournament.description,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textMediumColor,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(statusIcon, size: 12, color: statusColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          statusLabel,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Tournament details in a grid
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      Icons.location_on,
-                      tournament.location,
-                      AppTheme.textMediumColor,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildInfoItem(
-                      Icons.calendar_today,
-                      _formatDate(tournament.startDate),
-                      AppTheme.textMediumColor,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      Icons.people,
-                      '${tournament.currentParticipants}/${tournament.maxParticipants}',
-                      AppTheme.textMediumColor,
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildInfoItem(
-                      Icons.attach_money,
-                      '₹${tournament.entryFee.toInt()}',
-                      AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-
-              // Categories
-              if (tournament.categories.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: tournament.categories.take(4).map((category) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: AppTheme.primaryColor.withOpacity(0.2),
+                  // Header with title and status (for tournaments without images)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tournament.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textDarkColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              tournament.description,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textMediumColor,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
-                      child: Text(
-                        category,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.primaryColor,
+                      // Status badge only for tournaments without images
+                      if (tournament.imageUrl == null ||
+                          tournament.imageUrl!.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(statusIcon, size: 12, color: statusColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                statusLabel,
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Tournament details in a grid
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          Icons.location_on,
+                          tournament.location,
+                          AppTheme.textMediumColor,
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ],
-          ),
+                      Expanded(
+                        child: _buildInfoItem(
+                          Icons.calendar_today,
+                          _formatDate(tournament.startDate),
+                          AppTheme.textMediumColor,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          Icons.people,
+                          '${tournament.currentParticipants}/${tournament.maxParticipants}',
+                          AppTheme.textMediumColor,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoItem(
+                          Icons.attach_money,
+                          '₹${tournament.entryFee.toInt()}',
+                          AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Categories
+                  if (tournament.categories.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: tournament.categories.take(4).map((category) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Text(
+                            category,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

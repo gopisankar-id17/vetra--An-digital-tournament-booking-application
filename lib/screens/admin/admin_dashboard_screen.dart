@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../models/user.dart';
 import '../../models/tournament.dart';
-import '../../models/booking.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/app_drawer.dart';
-import '../../widgets/booking_card.dart';
 import '../../widgets/professional_fab.dart';
 import 'add_tournament_page.dart';
 import 'tournament_details_page.dart';
 import 'tournaments_list_page.dart';
+import 'tournament_requests_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -85,8 +84,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             label: 'Tournaments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book_online),
-            label: 'Bookings',
+            icon: Icon(Icons.approval),
+            label: 'Requests',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
@@ -115,7 +114,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 1:
         return 'Manage Tournaments';
       case 2:
-        return 'Manage Bookings';
+        return 'Tournament Requests';
       case 3:
         return 'Notifications';
       case 4:
@@ -140,7 +139,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 1:
         return _buildTournamentsContent();
       case 2:
-        return _buildBookingsContent();
+        return const TournamentRequestsPage();
       case 3:
         return _buildNotificationsContent();
       case 4:
@@ -243,36 +242,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildTournamentsContent() {
     // Use the dedicated TournamentsListPage
     return const TournamentsListPage();
-  }
-
-  Widget _buildBookingsContent() {
-    final bookings = Booking.getSampleBookings();
-
-    return bookings.isEmpty
-        ? const Center(
-            child: Text(
-              'No bookings available',
-              style: TextStyle(fontSize: 18, color: AppTheme.textMediumColor),
-            ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: bookings.length,
-            itemBuilder: (context, index) {
-              return BookingCard(
-                booking: bookings[index],
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'View booking details for: ${bookings[index].tournamentName}',
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
   }
 
   Widget _buildNotificationsContent() {
