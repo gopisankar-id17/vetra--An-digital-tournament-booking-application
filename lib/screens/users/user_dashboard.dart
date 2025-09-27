@@ -10,13 +10,16 @@ class UserDashboardPage extends StatefulWidget {
 }
 
 class _UserDashboardPageState extends State<UserDashboardPage> {
-  // 1. Add Carousel Controller and Index for Trending
+  // Bottom navigation
+  int _selectedIndex = 0;
+
+  // Carousel Controllers and Indices
   final CarouselSliderController _upcomingCarouselController = CarouselSliderController();
   final CarouselSliderController _ongoingCarouselController = CarouselSliderController();
-  final CarouselSliderController _trendingCarouselController = CarouselSliderController(); // New Controller
+  final CarouselSliderController _trendingCarouselController = CarouselSliderController();
   int _upcomingCurrentIndex = 0;
   int _ongoingCurrentIndex = 0;
-  int _trendingCurrentIndex = 0; // New Index
+  int _trendingCurrentIndex = 0;
 
   final List<Map<String, dynamic>> _upcomingTournaments = [
     {'title': 'Football Cup 2025', 'date': 'Jan 15', 'imageUrl': 'assets/images/football.jpg'},
@@ -25,27 +28,50 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   ];
 
   final List<Map<String, dynamic>> _ongoingTournaments = [
-    {'title': 'Esports Masters', 'imageUrl': 'assets/images/esports_1.jpg', 'color': const Color(0xFF1ABC9C)},
-    {'title': 'Tennis Open', 'imageUrl': 'assets/images/tennis_2.jpg', 'color': const Color(0xFF2ECC71)},
-    {'title': 'Volleyball Smash', 'imageUrl': 'assets/images/volleyball_3.jpg', 'color': const Color(0xFF3498DB)},
-    {'title': 'Badminton Blitz', 'imageUrl': 'assets/images/badminton_4.jpg', 'color': const Color(0xFF9B59B6)},
-    {'title': 'Chess Championship', 'imageUrl': 'assets/images/chess_5.jpg', 'color': const Color(0xFFE67E22)},
+    {'title': 'Esports Masters', 'imageUrl': 'assets/images/esports_1.jpg', 'color': const Color(0xFF6f42c1)},
+    {'title': 'Tennis Open', 'imageUrl': 'assets/images/tennis_2.jpg', 'color': const Color(0xFF8a63d2)},
+    {'title': 'Volleyball Smash', 'imageUrl': 'assets/images/volleyball_3.jpg', 'color': const Color(0xFF6f42c1)},
+    {'title': 'Badminton Blitz', 'imageUrl': 'assets/images/badminton_4.jpg', 'color': const Color(0xFF8a63d2)},
+    {'title': 'Chess Championship', 'imageUrl': 'assets/images/chess_5.jpg', 'color': const Color(0xFF6f42c1)},
   ];
 
-  // Modified structure to include image for carousel card look
   final List<Map<String, dynamic>> _trendingTournaments = [
-    {'title': 'City Marathon', 'status': 'HIGH DEMAND', 'imageUrl': 'assets/images/running.jpg', 'color': const Color(0xFF3498DB)},
-    {'title': 'Beach Soccer', 'status': 'POPULAR', 'imageUrl': 'assets/images/beach_soccer.jpg', 'color': const Color(0xFFE67E22)},
-    {'title': 'Mountain Bike Race', 'status': 'NEW', 'imageUrl': 'assets/images/mtb.jpg', 'color': const Color(0xFF2ECC71)},
-    {'title': 'Local Swimming Meet', 'status': 'HOT', 'imageUrl': 'assets/images/swimming.jpg', 'color': const Color(0xFF9B59B6)},
+    {'title': 'City Marathon', 'status': 'HIGH DEMAND', 'imageUrl': 'assets/images/running.jpg', 'color': const Color(0xFF6f42c1)},
+    {'title': 'Beach Soccer', 'status': 'POPULAR', 'imageUrl': 'assets/images/beach_soccer.jpg', 'color': const Color(0xFF8a63d2)},
+    {'title': 'Mountain Bike Race', 'status': 'NEW', 'imageUrl': 'assets/images/mtb.jpg', 'color': const Color(0xFF6f42c1)},
+    {'title': 'Local Swimming Meet', 'status': 'HOT', 'imageUrl': 'assets/images/swimming.jpg', 'color': const Color(0xFF8a63d2)},
   ];
+
+  void _onBottomNavTap(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    
+    switch (index) {
+      case 0:
+        // Already on dashboard
+        break;
+      case 1:
+        _showComingSoonSnackbar(context, 'Tournament search');
+        break;
+      case 2:
+        _showComingSoonSnackbar(context, 'My bookings');
+        break;
+      case 3:
+        _showComingSoonSnackbar(context, 'My profile');
+        break;
+      case 4:
+        _showComingSoonSnackbar(context, 'Notifications');
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Dashboard'),
-        backgroundColor: const Color(0xFF27AE60),
+        backgroundColor: const Color(0xFF6f42c1),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -58,7 +84,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF27AE60), Color(0xFF2ECC71)],
+                  colors: [Color(0xFF6f42c1), Color(0xFF8a63d2)],
                 ),
               ),
               child: Column(
@@ -70,7 +96,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                     child: Icon(
                       Icons.person,
                       size: 35,
-                      color: Color(0xFF27AE60),
+                      color: Color(0xFF6f42c1),
                     ),
                   ),
                   SizedBox(height: 10),
@@ -93,14 +119,14 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.dashboard, color: Color(0xFF27AE60)),
+              leading: const Icon(Icons.dashboard, color: Color(0xFF6f42c1)),
               title: const Text('Dashboard'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.sports, color: Color(0xFF27AE60)),
+              leading: const Icon(Icons.sports, color: Color(0xFF6f42c1)),
               title: const Text('Find Tournaments'),
               onTap: () {
                 Navigator.pop(context);
@@ -108,7 +134,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.list_alt, color: Color(0xFF27AE60)),
+              leading: const Icon(Icons.list_alt, color: Color(0xFF6f42c1)),
               title: const Text('My Bookings'),
               onTap: () {
                 Navigator.pop(context);
@@ -116,7 +142,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF27AE60)),
+              leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
               title: const Text('My Profile'),
               onTap: () {
                 Navigator.pop(context);
@@ -124,7 +150,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.notifications, color: Color(0xFF27AE60)),
+              leading: const Icon(Icons.notifications, color: Color(0xFF6f42c1)),
               title: const Text('Notifications'),
               onTap: () {
                 Navigator.pop(context);
@@ -225,7 +251,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4.0),
                           color: _upcomingCurrentIndex == entry.key
-                              ? const Color(0xFF3498DB)
+                              ? const Color(0xFF6f42c1)
                               : Colors.grey.withOpacity(0.4),
                         ),
                       ),
@@ -281,7 +307,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4.0),
                           color: _ongoingCurrentIndex == entry.key
-                              ? const Color(0xFFE74C3C)
+                              ? const Color(0xFF8a63d2)
                               : Colors.grey.withOpacity(0.4),
                         ),
                       ),
@@ -291,10 +317,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
 
                 const SizedBox(height: 30),
 
-                // --- Trending Tournaments Section (Now a Carousel) ---
+                // --- Trending Tournaments Section ---
                 _buildSectionHeader(context, 'Trending Now 🔥', () => _showComingSoonSnackbar(context, 'Trending Tournaments')),
                 const SizedBox(height: 15),
-                // NEW CAROUSEL IMPLEMENTATION
                 CarouselSlider(
                   carouselController: _trendingCarouselController,
                   options: CarouselOptions(
@@ -340,72 +365,158 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4.0),
                           color: _trendingCurrentIndex == entry.key
-                              ? const Color(0xFFE67E22) // Use a distinct color for trending
+                              ? const Color(0xFF6f42c1)
                               : Colors.grey.withOpacity(0.4),
                         ),
                       ),
                     );
                   }).toList(),
                 ),
-                // END NEW CAROUSEL IMPLEMENTATION
 
                 const SizedBox(height: 30),
 
-                // --- Quick Actions Section ---
+                // --- Tournament Stats Section ---
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF27AE60),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF6f42c1),
+                        const Color(0xFF8a63d2),
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                        color: const Color(0xFF6f42c1).withOpacity(0.3),
+                        spreadRadius: 2,
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        'Quick Actions',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Your Tournament Journey',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'ACTIVE',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildQuickActionButton(
-                            'Find Tournament',
-                            Icons.search,
-                            () => _showComingSoonSnackbar(context, 'Tournament search'),
+                          _buildStatCard('Tournaments\nJoined', '8', Icons.sports_soccer),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: Colors.white.withOpacity(0.3),
                           ),
-                          _buildQuickActionButton(
-                            'Book Slot',
-                            Icons.add_circle,
-                            () => _showComingSoonSnackbar(context, 'Booking feature'),
+                          _buildStatCard('Wins', '3', Icons.emoji_events),
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: Colors.white.withOpacity(0.3),
                           ),
-                          _buildQuickActionButton(
-                            'View History',
-                            Icons.history,
-                            () => _showComingSoonSnackbar(context, 'History feature'),
-                          ),
+                          _buildStatCard('Rank', '#24', Icons.trending_up),
                         ],
+                      ),
+                      const SizedBox(height: 15),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Achievement: Tournament Enthusiast Unlocked!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 90), // Extra space for bottom nav
               ],
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: _onBottomNavTap,
+        selectedItemColor: const Color(0xFF6f42c1),
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        elevation: 10,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Bookings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: 'Alerts',
+          ),
+        ],
       ),
     );
   }
@@ -436,7 +547,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             'View All',
             style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF27AE60),
+              color: Color(0xFF6f42c1),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -445,7 +556,6 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
   
-  // New: Trending Tournament Card for Carousel
   Widget _buildTrendingTournamentCard(BuildContext context, String title, String status, String imagePath, Color tagColor) {
     return GestureDetector(
       onTap: () {
@@ -535,7 +645,6 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
-  // Existing: Upcoming Tournament Card
   Widget _buildUpcomingTournamentPhotoCard(BuildContext context, String title, String date, String imagePath) {
     return GestureDetector(
       onTap: () {
@@ -563,7 +672,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                 imagePath,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.blue[100],
+                  color: const Color(0xFF6f42c1).withOpacity(0.2),
                   child: Center(child: Text(title, textAlign: TextAlign.center)),
                 ),
               ),
@@ -614,7 +723,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                 right: 10,
                 child: Chip(
                   label: Text('UPCOMING', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
-                  backgroundColor: Color(0xFF3498DB),
+                  backgroundColor: Color(0xFF6f42c1),
                   padding: EdgeInsets.zero,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -626,7 +735,6 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
-  // Existing: Ongoing Tournament Card
   Widget _buildOngoingTournamentPhotoCard(BuildContext context, String title, String imagePath) {
     return GestureDetector(
       onTap: () {
@@ -654,7 +762,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                 imagePath,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.red[100],
+                  color: const Color(0xFF8a63d2).withOpacity(0.2),
                   child: Center(child: Text(title, textAlign: TextAlign.center)),
                 ),
               ),
@@ -687,7 +795,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                 right: 10,
                 child: Chip(
                   label: Text('LIVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
-                  backgroundColor: Color(0xFFE74C3C),
+                  backgroundColor: Color(0xFF8a63d2),
                   padding: EdgeInsets.zero,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -698,7 +806,6 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
       ),
     );
   }
-
 
   void _showUpcomingTournamentDetails(BuildContext context, String title, String date) {
     showModalBottomSheet(
@@ -748,7 +855,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                       _showComingSoonSnackbar(context, 'Viewing details for $title');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3498DB),
+                      backgroundColor: const Color(0xFF6f42c1),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
@@ -761,7 +868,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                       _showComingSoonSnackbar(context, 'Registering for $title');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2ECC71),
+                      backgroundColor: const Color(0xFF8a63d2),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
@@ -809,7 +916,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                       _showComingSoonSnackbar(context, 'Viewing details for $title');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3498DB),
+                      backgroundColor: const Color(0xFF6f42c1),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
@@ -822,7 +929,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                       _showComingSoonSnackbar(context, 'Registering for $title');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2ECC71),
+                      backgroundColor: const Color(0xFF8a63d2),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     ),
@@ -837,7 +944,6 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
-  // NOTE: This function is no longer used in the build method as it was for the previous ListTiles
   Widget _buildTrendingTournamentTile(BuildContext context, String title, String status, IconData icon, Color color) {
     return GestureDetector(
       onTap: () => _showComingSoonSnackbar(context, 'Viewing trending tournament $title'),
@@ -877,6 +983,37 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
+  Widget _buildStatCard(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Colors.white,
+          size: 24,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.white70,
+            fontWeight: FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
   Widget _buildQuickActionButton(String label, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -891,7 +1028,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             child: Icon(
               icon,
               size: 24,
-              color: const Color(0xFF27AE60),
+              color: const Color(0xFF6f42c1),
             ),
           ),
           const SizedBox(height: 8),
