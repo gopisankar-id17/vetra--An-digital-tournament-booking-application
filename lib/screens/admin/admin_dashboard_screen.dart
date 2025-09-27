@@ -20,6 +20,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
   final User _adminUser = User.sampleAdmin();
+  int _refreshCounter = 0; // Used to force rebuilds
 
   // Carousel controllers and indices for tournament carousels
   final CarouselSliderController _upcomingCarouselController =
@@ -38,6 +39,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: Text(_getScreenTitle()),
         actions: [
+          // Show refresh button for Tournaments and Tournament Requests tabs
+          if (_selectedIndex == 1 || _selectedIndex == 2)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                // Force rebuild of the current page
+                setState(() {
+                  _refreshCounter++;
+                });
+              },
+              tooltip: 'Refresh',
+            ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -94,7 +107,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 1)
+      floatingActionButton: _selectedIndex == 0
           ? ProfessionalFloatingActionButton(
               onPressed: () {
                 _showCreateTournamentDialog(context);
@@ -139,7 +152,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 1:
         return _buildTournamentsContent();
       case 2:
-        return const TournamentRequestsPage();
+        return TournamentRequestsPage(key: ValueKey(_refreshCounter));
       case 3:
         return _buildNotificationsContent();
       case 4:
@@ -240,8 +253,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildTournamentsContent() {
-    // Use the dedicated TournamentsListPage
-    return const TournamentsListPage();
+    // Use the dedicated TournamentsListPage with refresh key
+    return TournamentsListPage(key: ValueKey(_refreshCounter));
   }
 
   Widget _buildNotificationsContent() {

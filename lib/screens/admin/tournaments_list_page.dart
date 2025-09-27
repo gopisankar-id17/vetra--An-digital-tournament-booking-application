@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/tournament.dart';
 import '../../services/tournament_service.dart';
 import '../../utils/app_theme.dart';
-import 'add_tournament_page.dart';
 import 'tournament_details_page.dart';
 
 class TournamentsListPage extends StatefulWidget {
@@ -43,52 +42,17 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
     );
   }
 
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Tournaments',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textDarkColor,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.primaryColor),
-        actions: [
-          IconButton(
-            onPressed: _loadTournaments,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToAddTournament(),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Tournament'),
-        elevation: 2,
-      ),
-      body: Container(
-        color: const Color(0xFFF8F9FA),
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppTheme.primaryColor),
-              )
-            : _tournaments.isEmpty
-            ? _buildEmptyState()
-            : _buildTournamentsList(),
-      ),
+    return Container(
+      color: const Color(0xFFF8F9FA),
+      child: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            )
+          : _tournaments.isEmpty
+          ? _buildEmptyState()
+          : _buildTournamentsList(),
     );
   }
 
@@ -109,19 +73,8 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first tournament to get started',
+            'Tournaments will appear here when created',
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => _navigateToAddTournament(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            icon: const Icon(Icons.add),
-            label: const Text('Create Tournament'),
           ),
         ],
       ),
@@ -548,24 +501,4 @@ class _TournamentsListPageState extends State<TournamentsListPage> {
     );
   }
 
-  void _navigateToAddTournament() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddTournamentPage(
-          onTournamentCreated: (tournament) {
-            _showSuccessSnackBar(
-              'Tournament "${tournament.name}" created successfully!',
-            );
-            _loadTournaments(); // Refresh the list
-          },
-        ),
-      ),
-    );
-
-    // Refresh the list when returning from add tournament page
-    if (result != null) {
-      _loadTournaments();
-    }
-  }
 }

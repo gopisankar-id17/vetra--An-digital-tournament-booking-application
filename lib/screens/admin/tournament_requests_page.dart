@@ -88,79 +88,82 @@ class _TournamentRequestsPageState extends State<TournamentRequestsPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        title: const Text(
-          'Tournament Requests',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textDarkColor,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.primaryColor),
-        actions: [
-          IconButton(
-            onPressed: _loadRequests,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primaryColor,
-          indicatorWeight: 3,
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Pending'),
-                  if (_pendingCount > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$_pendingCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+    return Column(
+      children: [
+        // Tab Bar Section
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: AppTheme.primaryColor,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppTheme.primaryColor,
+            indicatorWeight: 3,
+            tabs: [
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Pending'),
+                    if (_pendingCount > 0) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$_pendingCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const Tab(text: 'Approved'),
-            const Tab(text: 'Rejected'),
-          ],
+              const Tab(text: 'Approved'),
+              const Tab(text: 'Rejected'),
+            ],
+          ),
         ),
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            )
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildRequestsList(_pendingRequests, RequestStatus.pending),
-                _buildRequestsList(_approvedRequests, RequestStatus.approved),
-                _buildRequestsList(_rejectedRequests, RequestStatus.rejected),
-              ],
-            ),
+        // Content Section
+        Expanded(
+          child: Container(
+            color: const Color(0xFFF8F9FA),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                    ),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildRequestsList(
+                        _pendingRequests,
+                        RequestStatus.pending,
+                      ),
+                      _buildRequestsList(
+                        _approvedRequests,
+                        RequestStatus.approved,
+                      ),
+                      _buildRequestsList(
+                        _rejectedRequests,
+                        RequestStatus.rejected,
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
