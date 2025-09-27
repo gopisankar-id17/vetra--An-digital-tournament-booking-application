@@ -104,10 +104,23 @@ class _UserLoginPageState extends State<UserLoginPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Login'),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF6f42c1),
         foregroundColor: Colors.white, // For better contrast
       ),
-      body: Padding(
+      body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/sports.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black54, // Dark overlay for text readability
+              BlendMode.darken,
+            ),
+          ),
+        ),
+        child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -117,7 +130,7 @@ class _UserLoginPageState extends State<UserLoginPage> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.green,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 40),
@@ -142,21 +155,21 @@ class _UserLoginPageState extends State<UserLoginPage> {
                 prefixIcon: Icon(Icons.lock),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 35),
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : () => _handleUserLogin(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: const Color(0xFF6f42c1),
                   foregroundColor: Colors.white,
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
                         'Login',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 15),
                       ),
               ),
             ),
@@ -165,9 +178,13 @@ class _UserLoginPageState extends State<UserLoginPage> {
               onPressed: () {
                 Navigator.of(context).pushNamed('/user-signup');
               },
-              child: const Text('Don\'t have an account? Sign up'),
+              child: const Text(
+                'Don\'t have an account? Sign up',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
+        ),
         ),
       ),
     );

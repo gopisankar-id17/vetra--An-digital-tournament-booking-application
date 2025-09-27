@@ -101,14 +101,16 @@ class _UserSignupPageState extends State<UserSignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF3498DB),
-              Color(0xFF2980B9),
-            ],
+          image: DecorationImage(
+            image: AssetImage('assets/images/running.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black54, // Dark overlay for text readability
+              BlendMode.darken,
+            ),
           ),
         ),
         child: SafeArea(
@@ -145,7 +147,8 @@ class _UserSignupPageState extends State<UserSignupPage> {
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: Card(
-                        elevation: 20,
+                        elevation: 8,
+                        color: Colors.white.withOpacity(0.0), // Transparent white
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -154,17 +157,33 @@ class _UserSignupPageState extends State<UserSignupPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // User Icon
+                              // Vetra Logo
                               Container(
-                                padding: const EdgeInsets.all(20),
+                                padding: const EdgeInsets.all(15),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3498DB).withOpacity(0.1),
+                                  color: Colors.white,
                                   shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(
-                                  Icons.person_add,
-                                  size: 50,
-                                  color: Color(0xFF3498DB),
+                                child: Image.asset(
+                                  'assets/Vetra_logo.png',
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Fallback to icon if logo fails to load
+                                    return const Icon(
+                                      Icons.sports_soccer,
+                                      size: 50,
+                                      color: Color(0xFF6f42c1),
+                                    );
+                                  },
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -202,7 +221,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -231,7 +250,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -260,7 +279,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -298,7 +317,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -342,7 +361,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                         focusedBorder: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(15),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF3498DB),
+                                            color: Color(0xFF6f42c1),
                                             width: 2,
                                           ),
                                         ),
@@ -369,7 +388,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                               _agreeToTerms = value ?? false;
                                             });
                                           },
-                                          activeColor: const Color(0xFF3498DB),
+                                          activeColor: const Color(0xFF6f42c1),
                                         ),
                                         Expanded(
                                           child: Column(
@@ -393,7 +412,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                                       TextSpan(
                                                         text: 'Terms of Service',
                                                         style: TextStyle(
-                                                          color: Color(0xFF3498DB),
+                                                          color: Color(0xFF6f42c1),
                                                           fontWeight: FontWeight.bold,
                                                           decoration: TextDecoration.underline,
                                                         ),
@@ -402,7 +421,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                                       TextSpan(
                                                         text: 'Privacy Policy',
                                                         style: TextStyle(
-                                                          color: Color(0xFF3498DB),
+                                                          color: Color(0xFF6f42c1),
                                                           fontWeight: FontWeight.bold,
                                                           decoration: TextDecoration.underline,
                                                         ),
@@ -423,7 +442,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                       child: ElevatedButton(
                                         onPressed: _isLoading ? null : _handleSignup,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF3498DB),
+                                          backgroundColor: const Color(0xFF6f42c1),
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(vertical: 15),
                                           shape: RoundedRectangleBorder(
@@ -468,7 +487,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
                                           child: const Text(
                                             'Login',
                                             style: TextStyle(
-                                              color: Color(0xFF3498DB),
+                                              color: Color(0xFF6f42c1),
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -493,3 +512,4 @@ class _UserSignupPageState extends State<UserSignupPage> {
     );
   }
 }
+
