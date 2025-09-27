@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../models/user.dart';
 import '../../models/tournament.dart';
+import '../../services/tournament_service.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/professional_fab.dart';
@@ -22,6 +23,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final User _adminUser = User.sampleAdmin();
   int _refreshCounter = 0; // Used to force rebuilds
 
+  // Tournament service and data
+  final TournamentService _tournamentService = TournamentService();
+  List<Tournament> _allTournaments = [];
+  bool _isLoadingTournaments = true;
+
   // Carousel controllers and indices for tournament carousels
   final CarouselSliderController _upcomingCarouselController =
       CarouselSliderController();
@@ -34,6 +40,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _completedCurrentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _loadTournaments();
+  }
+
+  // Load tournaments from database
+  Future<void> _loadTournaments() async {
+    try {
+      setState(() => _isLoadingTournaments = true);
+      final tournaments = await _tournamentService.getAllTournaments();
+
+      // Debug: Log tournament image URLs
+      for (var tournament in tournaments) {
+        print('Tournament: ${tournament.name}');
+        print('Image URL: ${tournament.imageUrl}');
+        print('Image URL is empty: ${tournament.imageUrl?.isEmpty ?? true}');
+        print('---');
+      }
+
+      setState(() {
+        _allTournaments = tournaments;
+        _isLoadingTournaments = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingTournaments = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load tournaments: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -44,10 +87,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                // Force rebuild of the current page
-                setState(() {
-                  _refreshCounter++;
-                });
+                if (_selectedIndex == 1) {
+                  // Refresh tournaments page
+                  setState(() {
+                    _refreshCounter++;
+                  });
+                } else if (_selectedIndex == 2) {
+                  // Refresh tournament requests page
+                  setState(() {
+                    _refreshCounter++;
+                  });
+                }
+              },
+              tooltip: 'Refresh',
+            ),
+          // Show refresh button for Dashboard tab
+          if (_selectedIndex == 0)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                _loadTournaments(); // Refresh dashboard data
               },
               tooltip: 'Refresh',
             ),
@@ -196,16 +255,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildDashboardContent() {
-    final tournaments = Tournament.getSampleTournaments();
-    final upcomingTournaments = tournaments
-        .where((t) => t.status == TournamentStatus.upcoming)
-        .toList();
-    final ongoingTournaments = tournaments
-        .where((t) => t.status == TournamentStatus.ongoing)
-        .toList();
-    final completedTournaments = tournaments
-        .where((t) => t.status == TournamentStatus.completed)
-        .toList();
+    if (_isLoadingTournaments) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      );
+    }
+
+    // Filter tournaments by actual dates instead of status field
+    final now = DateTime.now();
+
+    final upcomingTournaments = _allTournaments.where((t) {
+      return t.startDate.isAfter(now);
+    }).toList();
+
+    final ongoingTournaments = _allTournaments.where((t) {
+      return t.startDate.isBefore(now) && t.endDate.isAfter(now);
+    }).toList();
+
+    final completedTournaments = _allTournaments.where((t) {
+      return t.endDate.isBefore(now);
+    }).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -571,9 +640,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             );
 
             // Refresh the tournaments list
-            setState(() {
-              // Add logic to refresh tournaments if needed
-            });
+            _loadTournaments(); // Reload tournament data from database
           },
         ),
       ),
@@ -1149,30 +1216,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Tournament tournament,
     String cardType,
   ) {
+    // Debug: Print tournament info
+    print('Building card for: ${tournament.name}');
+    print('Image URL: "${tournament.imageUrl}"');
+    print(
+      'Has image URL: ${tournament.imageUrl != null && tournament.imageUrl!.isNotEmpty}',
+    );
+    print('Is HTTP URL: ${tournament.imageUrl?.startsWith('http') ?? false}');
+
+    // Get actual status based on dates
+    final now = DateTime.now();
     Color statusColor;
     String statusLabel;
     IconData statusIcon;
 
-    switch (cardType) {
-      case 'upcoming':
-        statusColor = const Color(0xFF3498DB);
-        statusLabel = 'UPCOMING';
-        statusIcon = Icons.schedule;
-        break;
-      case 'ongoing':
-        statusColor = const Color(0xFFE74C3C);
-        statusLabel = 'LIVE';
-        statusIcon = Icons.play_circle_filled;
-        break;
-      case 'completed':
-        statusColor = const Color(0xFF27AE60);
-        statusLabel = 'COMPLETED';
-        statusIcon = Icons.check_circle;
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusLabel = 'UNKNOWN';
-        statusIcon = Icons.info;
+    if (tournament.startDate.isAfter(now)) {
+      statusColor = const Color(0xFF3498DB);
+      statusLabel = 'UPCOMING';
+      statusIcon = Icons.schedule;
+    } else if (tournament.startDate.isBefore(now) &&
+        tournament.endDate.isAfter(now)) {
+      statusColor = const Color(0xFFE74C3C);
+      statusLabel = 'LIVE';
+      statusIcon = Icons.play_circle_filled;
+    } else {
+      statusColor = const Color(0xFF27AE60);
+      statusLabel = 'COMPLETED';
+      statusIcon = Icons.check_circle;
     }
 
     return GestureDetector(
@@ -1203,29 +1273,129 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Background gradient based on tournament type
+              // Tournament image from database as background
+              Builder(
+                builder: (context) {
+                  final hasValidImageUrl =
+                      tournament.imageUrl != null &&
+                      tournament.imageUrl!.isNotEmpty &&
+                      (tournament.imageUrl!.startsWith('http://') ||
+                          tournament.imageUrl!.startsWith('https://'));
+
+                  print('Has valid image URL: $hasValidImageUrl');
+
+                  if (hasValidImageUrl) {
+                    return Image.network(
+                      tournament.imageUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          print(
+                            'Image loaded successfully: ${tournament.imageUrl}',
+                          );
+                          return child;
+                        }
+                        print('Loading image: ${tournament.imageUrl}');
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: statusColor,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        print('Error loading image: $error');
+                        print('Image URL: ${tournament.imageUrl}');
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                statusColor.withValues(alpha: 0.8),
+                                statusColor.withValues(alpha: 0.6),
+                              ],
+                            ),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image,
+                                  color: Colors.white70,
+                                  size: 30,
+                                ),
+                                Text(
+                                  'Failed to load image',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  } else {
+                    print('Using fallback gradient - no valid image URL');
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            statusColor.withValues(alpha: 0.8),
+                            statusColor.withValues(alpha: 0.6),
+                          ],
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image_not_supported,
+                              color: Colors.white70,
+                              size: 30,
+                            ),
+                            Text(
+                              'No image available',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+              // Dark overlay for better text readability
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                     colors: [
-                      statusColor.withOpacity(0.8),
-                      statusColor.withOpacity(0.6),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
                     ],
                   ),
                 ),
               ),
-              // Tournament image if available
-              if (tournament.imageUrl?.isNotEmpty == true)
-                Opacity(
-                  opacity: 0.3,
-                  child: Image.asset(
-                    tournament.imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(),
-                  ),
-                ),
               // Content overlay
               Positioned(
                 bottom: 20,
@@ -1275,7 +1445,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _formatDate(tournament.startDate),
+                          _getDisplayDate(tournament),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -1283,6 +1453,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ],
                     ),
+                    // Show progress bar for ongoing tournaments
+                    if (tournament.startDate.isBefore(DateTime.now()) &&
+                        tournament.endDate.isAfter(DateTime.now())) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 3,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          color: Colors.white30,
+                        ),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: _getTournamentProgress(tournament),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(2),
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'In Progress • ${(_getTournamentProgress(tournament) * 100).toInt()}% Complete',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1355,5 +1555,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  // Get appropriate date text based on tournament status
+  String _getDisplayDate(Tournament tournament) {
+    final now = DateTime.now();
+
+    if (tournament.startDate.isAfter(now)) {
+      // Upcoming tournament - show start date
+      return 'Starts ${_formatDate(tournament.startDate)}';
+    } else if (tournament.startDate.isBefore(now) &&
+        tournament.endDate.isAfter(now)) {
+      // Ongoing tournament - show end date
+      return 'Ends ${_formatDate(tournament.endDate)}';
+    } else {
+      // Completed tournament - show completion date
+      return 'Completed ${_formatDate(tournament.endDate)}';
+    }
+  }
+
+  // Calculate tournament progress (0.0 to 1.0) for ongoing tournaments
+  double _getTournamentProgress(Tournament tournament) {
+    final now = DateTime.now();
+    if (now.isBefore(tournament.startDate)) return 0.0;
+    if (now.isAfter(tournament.endDate)) return 1.0;
+
+    final totalDuration = tournament.endDate
+        .difference(tournament.startDate)
+        .inMilliseconds;
+    final elapsed = now.difference(tournament.startDate).inMilliseconds;
+
+    return (elapsed / totalDuration).clamp(0.0, 1.0);
   }
 }
