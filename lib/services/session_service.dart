@@ -39,12 +39,13 @@ class SessionService {
   }
 
   static Future<void> clearAdminSession() async {
+    print('SessionService: Clearing admin session...');
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_adminSessionKey);
     await prefs.remove(_adminIdKey);
     await prefs.remove(_adminEmailKey);
     await prefs.remove(_adminNameKey);
-    print('SessionService: Admin session cleared');
+    print('SessionService: Admin session cleared successfully');
   }
 
   // User Session Management

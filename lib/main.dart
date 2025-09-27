@@ -10,17 +10,17 @@ import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/broadcast_message_screen.dart';
 import 'screens/users/user_login_page.dart';
 import 'screens/users/user_signup_page.dart';
-import 'screens/users/user_dashboard_screen.dart';
 import 'screens/users/user_dashboard.dart';
-import 'screens/users/tournament_details_screen.dart';
-import 'screens/users/tournament_search_screen.dart';
+
 import 'screens/users/notification_center_screen.dart';
 import 'screens/users/team_chat_screen.dart';
 import 'screens/users/leaderboard_screen.dart';
-import 'screens/users/booking_success_screen.dart';
-import 'screens/users/profile_customization_screen.dart';
-import 'screens/users/help_support_screen.dart';
+
+import 'screens/common/profile_customization_screen.dart';
+import 'screens/common/help_support_screen.dart';
+import 'models/user.dart';
 import 'utils/app_theme.dart';
+import 'services/session_service.dart'; // Add SessionService import
 import 'dart:async'; // for Timer
 
 Future<void> main() async {
@@ -54,11 +54,11 @@ class MyApp extends StatelessWidget {
         '/user-login': (context) => const UserLoginPage(),
         '/user-signup': (context) => const UserSignupPage(),
         '/user-dashboard': (context) => const UserDashboardPage(),
-        '/user': (context) => const UserDashboardScreen(),
+        '/user': (context) => const UserDashboardPage(),
         '/user-notifications': (context) => const NotificationCenterScreen(),
         '/user-team-chat': (context) => const TeamChatScreen(),
         '/user-leaderboard': (context) => const LeaderboardScreen(),
-        '/user-profile': (context) => const ProfileCustomizationScreen(),
+        '/user-profile': (context) => ProfileCustomizationScreen(user: User.sampleUser()),
         '/user-help': (context) => const HelpSupportScreen(),
       },
       onUnknownRoute: (settings) {
@@ -98,13 +98,49 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     });
 
-    // Navigate to LandingPage after 10 seconds
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LandingPage()),
-      );
+    // Check session and navigate after 3 seconds
+    Timer(const Duration(seconds: 3), () {
+      _checkSessionAndNavigate();
     });
+  }
+
+  Future<void> _checkSessionAndNavigate() async {
+    try {
+      print('SplashScreen: Checking sessions...');
+      // Check if admin is logged in
+      final isAdmin = await SessionService.isAdminLoggedIn();
+      print('SplashScreen: Admin logged in: $isAdmin');
+      if (isAdmin) {
+        if (mounted) {
+          print('SplashScreen: Navigating to admin dashboard');
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          return;
+        }
+      }
+
+      // Check if user is logged in
+      final isUser = await SessionService.isUserLoggedIn();
+      print('SplashScreen: User logged in: $isUser');
+      if (isUser) {
+        if (mounted) {
+          print('SplashScreen: Navigating to user dashboard');
+          Navigator.pushReplacementNamed(context, '/user-dashboard');
+          return;
+        }
+      }
+
+      // No session found, go to landing page
+      print('SplashScreen: No sessions found, going to landing page');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    } catch (e) {
+      print('SplashScreen: Error checking session: $e');
+      // On error, go to landing page
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    }
   }
 
   @override

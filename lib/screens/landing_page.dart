@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/session_service.dart';
 import 'admin/admin_login_page.dart';
 import 'users/user_login_page.dart';
 import 'users/user_signup_page.dart';
@@ -15,6 +16,33 @@ class _LandingPageState extends State<LandingPage> {
   static const double _cardMaxWidth = 350.0;
   // Define a consistent padding for the cards
   static const EdgeInsets _cardPadding = EdgeInsets.all(30);
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for existing sessions when landing page loads
+    _checkExistingSessions();
+  }
+
+  Future<void> _checkExistingSessions() async {
+    try {
+      // Check if admin is already logged in
+      final isAdmin = await SessionService.isAdminLoggedIn();
+      if (isAdmin && mounted) {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        return;
+      }
+
+      // Check if user is already logged in
+      final isUser = await SessionService.isUserLoggedIn();
+      if (isUser && mounted) {
+        Navigator.pushReplacementNamed(context, '/user-dashboard');
+        return;
+      }
+    } catch (e) {
+      print('LandingPage: Error checking sessions: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
