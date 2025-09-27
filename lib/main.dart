@@ -10,12 +10,13 @@ import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/broadcast_message_screen.dart';
 import 'screens/users/user_login_page.dart';
 import 'screens/users/user_signup_page.dart';
-import 'screens/users/user_dashboard.dart';
+import 'screens/users/user_dashboard_page.dart';
 import 'screens/users/notification_center_screen.dart';
 import 'screens/users/team_chat_screen.dart';
 import 'screens/users/leaderboard_screen.dart';
 import 'screens/users/profile_customization_screen.dart';
 import 'screens/users/help_support_screen.dart';
+import 'services/session_service.dart';
 import 'utils/app_theme.dart';
 import 'dart:async'; // for Timer
 
@@ -83,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Typing animation
     Timer.periodic(const Duration(milliseconds: 150), (timer) {
-      if (charIndex < fullText.length) {
+      if (charIndex < fullText.length && mounted) {
         setState(() {
           displayText += fullText[charIndex];
           charIndex++;
@@ -93,13 +94,60 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     });
 
-    // Navigate to LandingPage after 10 seconds
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LandingPage()),
-      );
+    // Check session and navigate after splash animation
+    Timer(const Duration(seconds: 3), () {
+      _checkSessionAndNavigate();
     });
+    
+    // Also add immediate debug logging
+    print('SplashScreen: Initialized, will check sessions in 3 seconds');
+  }
+
+  Future<void> _checkSessionAndNavigate() async {
+    print('SplashScreen: Checking existing sessions...');
+    
+    try {
+      // Check if admin is logged in
+      bool isAdminLoggedIn = await SessionService.isAdminLoggedIn();
+      print('SplashScreen: Admin logged in: $isAdminLoggedIn');
+      
+      if (isAdminLoggedIn) {
+        final adminSession = await SessionService.getAdminSession();
+        print('SplashScreen: Admin session found for: ${adminSession['email']}');
+        
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        }
+        return;
+      }
+
+      // Check if user is logged in
+      bool isUserLoggedIn = await SessionService.isUserLoggedIn();
+      print('SplashScreen: User logged in: $isUserLoggedIn');
+      
+      if (isUserLoggedIn) {
+        final userSession = await SessionService.getUserSession();
+        print('SplashScreen: User session found for: ${userSession['phone']}');
+        print('SplashScreen: Navigating via SESSION PERSISTENCE to user-dashboard');
+        
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/user-dashboard');
+        }
+        return;
+      }
+
+      // No session found, go to landing page
+      print('SplashScreen: No active session found, going to landing page');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    } catch (e) {
+      print('SplashScreen: Error checking sessions: $e');
+      // On error, go to landing page
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    }
   }
 
   @override

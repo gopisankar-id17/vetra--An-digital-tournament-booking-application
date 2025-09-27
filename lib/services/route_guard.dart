@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'session_service.dart';
 import '../screens/landing_page.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
-import '../screens/users/user_dashboard.dart';
+import '../screens/users/user_dashboard_page.dart';
 
 class RouteGuard {
   static Future<Widget> getInitialRoute() async {

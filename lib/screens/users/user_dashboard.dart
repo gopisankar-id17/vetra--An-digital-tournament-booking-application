@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import '../landing_page.dart'; // Assuming this path is correct
-import 'user_profile_page.dart';
+import '../common/profile_customization_screen.dart';
 import 'about_us_page.dart';
 import '../../models/user.dart';
+import '../../auth_service.dart';
 
 class UserDashboardPage extends StatefulWidget {
   const UserDashboardPage({super.key});
@@ -45,7 +45,14 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     {'title': 'Local Swimming Meet', 'status': 'HOT', 'imageUrl': 'assets/images/swimming.jpg', 'color': const Color(0xFF8a63d2)},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    print('UserDashboard: initState called - Dashboard initialized');
+  }
+
   void _onBottomNavTap(int index) {
+    print('UserDashboard: Bottom nav tap - index: $index');
     switch (index) {
       case 0:
         // Already on dashboard, just update selected index
@@ -66,28 +73,47 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
         _showComingSoonSnackbar(context, 'My bookings');
         break;
       case 3:
-        // Navigate to profile page - don't change selected index
+        // Navigate to profile customization page and update selected index temporarily
+        setState(() {
+          _selectedIndex = 3;
+        });
+        print('UserDashboard: Navigating to Profile Customization page');
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserProfilePage(user: User.sampleUser()),
+            builder: (context) => ProfileCustomizationScreen(user: User.sampleUser()),
           ),
-        );
+        ).then((_) {
+          // Reset to dashboard when returning
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
         break;
       case 4:
-        // Navigate to About Us page - don't change selected index
+        // Navigate to About Us page and update selected index temporarily
+        setState(() {
+          _selectedIndex = 4;
+        });
+        print('UserDashboard: Navigating to About Us page');
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const AboutUsPage(),
           ),
-        );
+        ).then((_) {
+          // Reset to dashboard when returning
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print('UserDashboard: Building dashboard with selectedIndex: $_selectedIndex');
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Dashboard'),
@@ -187,10 +213,60 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout'),
               onTap: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LandingPage()),
-                  (route) => false,
+                // Show confirmation dialog
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Logout Confirmation'),
+                    content: const Text('Are you sure you want to logout?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context); // Close dialog first
+                          Navigator.pop(context); // Close drawer
+                          
+                          try {
+                            print('UserDashboard: Logout confirmed');
+                            
+                            // Import the required service
+                            final authService = AuthService();
+                            await authService.logoutUser();
+                            print('UserDashboard: User session cleared');
+                            
+                            // Add small delay to ensure session is cleared
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                              print('UserDashboard: Navigated to landing page');
+                            }
+                          } catch (e) {
+                            print('UserDashboard: Error during logout: $e');
+                            // Even on error, try to navigate if context is valid
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -510,38 +586,63 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: _onBottomNavTap,
-        selectedItemColor: const Color(0xFF6f42c1),
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        elevation: 10,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Bookings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline),
-            label: 'About Us',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 0,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex.clamp(0, 4), // Ensure index is within bounds
+          onTap: (index) {
+            print('BottomNav: Tapped index $index');
+            _onBottomNavTap(index);
+          },
+          selectedItemColor: const Color(0xFF6f42c1),
+          unselectedItemColor: Colors.grey[600],
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 11),
+          selectedFontSize: 12,
+          unselectedFontSize: 11,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard, size: 24),
+              activeIcon: Icon(Icons.dashboard, size: 26),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search, size: 24),
+              activeIcon: Icon(Icons.search, size: 26),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt, size: 24),
+              activeIcon: Icon(Icons.list_alt, size: 26),
+              label: 'Bookings',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, size: 24),
+              activeIcon: Icon(Icons.person, size: 26),
+              label: 'Profile',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.info_outline, size: 24),
+              activeIcon: Icon(Icons.info, size: 26),
+              label: 'About',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../utils/app_theme.dart';
+import '../auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
   final User user;
@@ -279,13 +280,43 @@ class AppDrawer extends StatelessWidget {
                         child: const Text('Cancel'),
                       ),
                       ElevatedButton(
-                        onPressed: () {
-                          // For now just go back to landing page
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/',
-                            (route) => false,
-                          );
+                        onPressed: () async {
+                          print('AppDrawer: Logout button pressed');
+                          Navigator.pop(context); // Close dialog first
+                          
+                          try {
+                            // Clear appropriate session based on user type
+                            final authService = AuthService();
+                            if (user.isAdmin) {
+                              await authService.logoutAdmin();
+                              print('AppDrawer: Admin session cleared');
+                            } else {
+                              await authService.logoutUser();
+                              print('AppDrawer: User session cleared');
+                            }
+                            
+                            // Add small delay to ensure session is cleared
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                              print('AppDrawer: Navigated to landing page');
+                            }
+                          } catch (e) {
+                            print('AppDrawer: Error during logout: $e');
+                            // Even on error, try to navigate if context is valid
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                            }
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.errorColor,
