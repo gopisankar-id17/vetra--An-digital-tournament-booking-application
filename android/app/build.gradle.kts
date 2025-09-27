@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.vetra"
     compileSdk = 36
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "29.0.14033849"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../models/user.dart';
 import '../../models/tournament.dart';
-import '../../models/booking.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/app_drawer.dart';
-import '../../widgets/tournament_card.dart';
-import '../../widgets/booking_card.dart';
 import '../../widgets/professional_fab.dart';
 import 'add_tournament_page.dart';
 import 'tournament_details_page.dart';
+import 'tournaments_list_page.dart';
+import 'tournament_requests_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -21,6 +20,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
   final User _adminUser = User.sampleAdmin();
+  int _refreshCounter = 0; // Used to force rebuilds
 
   // Carousel controllers and indices for tournament carousels
   final CarouselSliderController _upcomingCarouselController =
@@ -39,6 +39,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: Text(_getScreenTitle()),
         actions: [
+          // Show refresh button for Tournaments and Tournament Requests tabs
+          if (_selectedIndex == 1 || _selectedIndex == 2)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                // Force rebuild of the current page
+                setState(() {
+                  _refreshCounter++;
+                });
+              },
+              tooltip: 'Refresh',
+            ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -85,8 +97,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             label: 'Tournaments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book_online),
-            label: 'Bookings',
+            icon: Icon(Icons.approval),
+            label: 'Requests',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
@@ -95,7 +107,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 1)
+      floatingActionButton: _selectedIndex == 0
           ? ProfessionalFloatingActionButton(
               onPressed: () {
                 _showCreateTournamentDialog(context);
@@ -115,7 +127,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 1:
         return 'Manage Tournaments';
       case 2:
-        return 'Manage Bookings';
+        return 'Tournament Requests';
       case 3:
         return 'Notifications';
       case 4:
@@ -140,7 +152,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 1:
         return _buildTournamentsContent();
       case 2:
-        return _buildBookingsContent();
+        return TournamentRequestsPage(key: ValueKey(_refreshCounter));
       case 3:
         return _buildNotificationsContent();
       case 4:
@@ -241,211 +253,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildTournamentsContent() {
-    final tournaments = Tournament.getSampleTournaments();
-
-    return tournaments.isEmpty
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.emoji_events,
-                    size: 64,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'No tournaments yet',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDarkColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Create your first tournament to get started',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.textMediumColor,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton.icon(
-                  onPressed: () => _showCreateTournamentDialog(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.add),
-                  label: const Text(
-                    'Create Tournament',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          )
-        : Column(
-            children: [
-              // Header with stats
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatColumn(
-                      'Total',
-                      tournaments.length.toString(),
-                      Icons.emoji_events,
-                      AppTheme.primaryColor,
-                    ),
-                    _buildStatColumn(
-                      'Upcoming',
-                      tournaments
-                          .where((t) => t.status == TournamentStatus.upcoming)
-                          .length
-                          .toString(),
-                      Icons.schedule,
-                      Colors.blue,
-                    ),
-                    _buildStatColumn(
-                      'Ongoing',
-                      tournaments
-                          .where((t) => t.status == TournamentStatus.ongoing)
-                          .length
-                          .toString(),
-                      Icons.play_arrow,
-                      Colors.green,
-                    ),
-                    _buildStatColumn(
-                      'Completed',
-                      tournaments
-                          .where((t) => t.status == TournamentStatus.completed)
-                          .length
-                          .toString(),
-                      Icons.check_circle,
-                      Colors.grey,
-                    ),
-                  ],
-                ),
-              ),
-              // Tournament list
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: tournaments.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: TournamentCard(
-                        tournament: tournaments[index],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TournamentDetailsPage(
-                                tournament: tournaments[index],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-  }
-
-  Widget _buildStatColumn(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textDarkColor,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: AppTheme.textMediumColor),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBookingsContent() {
-    final bookings = Booking.getSampleBookings();
-
-    return bookings.isEmpty
-        ? const Center(
-            child: Text(
-              'No bookings available',
-              style: TextStyle(fontSize: 18, color: AppTheme.textMediumColor),
-            ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: bookings.length,
-            itemBuilder: (context, index) {
-              return BookingCard(
-                booking: bookings[index],
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'View booking details for: ${bookings[index].tournamentName}',
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
+    // Use the dedicated TournamentsListPage with refresh key
+    return TournamentsListPage(key: ValueKey(_refreshCounter));
   }
 
   Widget _buildNotificationsContent() {
