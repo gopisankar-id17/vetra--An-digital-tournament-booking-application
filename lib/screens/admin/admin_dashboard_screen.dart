@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import '../../models/user.dart';
 import '../../models/tournament.dart';
 import '../../models/booking.dart';
@@ -8,6 +9,7 @@ import '../../widgets/tournament_card.dart';
 import '../../widgets/booking_card.dart';
 import '../../widgets/professional_fab.dart';
 import 'add_tournament_page.dart';
+import 'tournament_details_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -19,6 +21,17 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
   final User _adminUser = User.sampleAdmin();
+
+  // Carousel controllers and indices for tournament carousels
+  final CarouselSliderController _upcomingCarouselController =
+      CarouselSliderController();
+  final CarouselSliderController _ongoingCarouselController =
+      CarouselSliderController();
+  final CarouselSliderController _completedCarouselController =
+      CarouselSliderController();
+  int _upcomingCurrentIndex = 0;
+  int _ongoingCurrentIndex = 0;
+  int _completedCurrentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +95,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-      floatingActionButton: _selectedIndex == 1
+      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 1)
           ? ProfessionalFloatingActionButton(
               onPressed: () {
                 _showCreateTournamentDialog(context);
@@ -178,215 +191,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final ongoingTournaments = tournaments
         .where((t) => t.status == TournamentStatus.ongoing)
         .toList();
+    final completedTournaments = tournaments
+        .where((t) => t.status == TournamentStatus.completed)
+        .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome message
-          const Text(
-            'Welcome back, Admin!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textDarkColor,
-            ),
-          ),
-          const Text(
-            'Here\'s what\'s happening with your tournaments',
-            style: TextStyle(fontSize: 16, color: AppTheme.textMediumColor),
-          ),
-          const SizedBox(height: 24),
-
-          // Stats cards
-          _buildStatsGrid(),
-          const SizedBox(height: 24),
-
           // Recent tournaments
-          const Text(
-            'Upcoming Tournaments',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textDarkColor,
-            ),
+          _buildTournamentCarousel(
+            title: 'Upcoming Tournaments 🗓️',
+            tournaments: upcomingTournaments,
+            carouselController: _upcomingCarouselController,
+            currentIndex: _upcomingCurrentIndex,
+            onPageChanged: (index) =>
+                setState(() => _upcomingCurrentIndex = index),
+            cardType: 'upcoming',
           ),
-          const SizedBox(height: 12),
-
-          if (upcomingTournaments.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'No upcoming tournaments',
-                  style: TextStyle(color: AppTheme.textMediumColor),
-                ),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: upcomingTournaments.length.clamp(0, 3),
-              itemBuilder: (context, index) {
-                return TournamentCard(
-                  tournament: upcomingTournaments[index],
-                  showActions: false,
-                  onTap: () {
-                    // Show tournament details
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'View details of ${upcomingTournaments[index].name}',
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
 
           const SizedBox(height: 24),
 
           // Ongoing tournaments
-          const Text(
-            'Ongoing Tournaments',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textDarkColor,
-            ),
+          _buildTournamentCarousel(
+            title: 'Ongoing Tournaments 🥇',
+            tournaments: ongoingTournaments,
+            carouselController: _ongoingCarouselController,
+            currentIndex: _ongoingCurrentIndex,
+            onPageChanged: (index) =>
+                setState(() => _ongoingCurrentIndex = index),
+            cardType: 'ongoing',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
 
-          if (ongoingTournaments.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'No ongoing tournaments',
-                  style: TextStyle(color: AppTheme.textMediumColor),
-                ),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: ongoingTournaments.length,
-              itemBuilder: (context, index) {
-                return TournamentCard(
-                  tournament: ongoingTournaments[index],
-                  showActions: false,
-                  onTap: () {
-                    // Show tournament details
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'View details of ${ongoingTournaments[index].name}',
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+          // Completed tournaments
+          _buildTournamentCarousel(
+            title: 'Completed Tournaments ✅',
+            tournaments: completedTournaments,
+            carouselController: _completedCarouselController,
+            currentIndex: _completedCurrentIndex,
+            onPageChanged: (index) =>
+                setState(() => _completedCurrentIndex = index),
+            cardType: 'completed',
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.1, // Adjust aspect ratio to prevent overflow
-      children: [
-        _buildStatCard(
-          title: 'Tournaments',
-          value: '4',
-          icon: Icons.emoji_events,
-          color: AppTheme.primaryColor,
-        ),
-        _buildStatCard(
-          title: 'Bookings',
-          value: '78',
-          icon: Icons.calendar_today,
-          color: AppTheme.secondaryColor,
-        ),
-        _buildStatCard(
-          title: 'Revenue',
-          value: '₹1,50,000',
-          icon: Icons.attach_money,
-          color: AppTheme.successColor,
-        ),
-        _buildStatCard(
-          title: 'Users',
-          value: '125',
-          icon: Icons.people,
-          color: AppTheme.infoColor,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(12), // Reduced padding
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center, // Changed to center
-          mainAxisSize: MainAxisSize.min, // Added to prevent overflow
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6), // Reduced padding
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 20), // Reduced icon size
-            ),
-            const SizedBox(height: 8), // Reduced spacing
-            Flexible(
-              // Made text flexible to prevent overflow
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 24, // Reduced font size
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Flexible(
-              // Made text flexible to prevent overflow
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12, // Reduced font size
-                  color: AppTheme.textMediumColor,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -518,9 +367,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       child: TournamentCard(
                         tournament: tournaments[index],
                         onTap: () {
-                          _showTournamentManageDialog(
+                          Navigator.push(
                             context,
-                            tournaments[index],
+                            MaterialPageRoute(
+                              builder: (context) => TournamentDetailsPage(
+                                tournament: tournaments[index],
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -562,109 +415,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           style: const TextStyle(fontSize: 12, color: AppTheme.textMediumColor),
         ),
       ],
-    );
-  }
-
-  void _showTournamentManageDialog(
-    BuildContext context,
-    Tournament tournament,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Manage: ${tournament.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit, color: AppTheme.primaryColor),
-              title: const Text('Edit Tournament'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Edit tournament feature coming soon'),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.people, color: Colors.blue),
-              title: const Text('View Participants'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Participants view coming soon'),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.bar_chart, color: Colors.green),
-              title: const Text('View Analytics'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Analytics view coming soon')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Tournament'),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirmation(context, tournament);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context, Tournament tournament) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Tournament'),
-        content: Text(
-          'Are you sure you want to delete "${tournament.name}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Tournament "${tournament.name}" deleted successfully',
-                  ),
-                  backgroundColor: AppTheme.successColor,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1487,5 +1237,314 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  // Tournament Carousel Builder
+  Widget _buildTournamentCarousel({
+    required String title,
+    required List<Tournament> tournaments,
+    required CarouselSliderController carouselController,
+    required int currentIndex,
+    required Function(int) onPageChanged,
+    required String cardType,
+  }) {
+    if (tournaments.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textDarkColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'No ${cardType.toLowerCase()} tournaments',
+                style: const TextStyle(color: AppTheme.textMediumColor),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDarkColor,
+          ),
+        ),
+        const SizedBox(height: 15),
+        CarouselSlider(
+          carouselController: carouselController,
+          options: CarouselOptions(
+            height: 180.0,
+            autoPlay: true,
+            autoPlayInterval: Duration(seconds: cardType == 'ongoing' ? 4 : 3),
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enlargeCenterPage: true,
+            viewportFraction: 0.85,
+            aspectRatio: 16 / 9,
+            onPageChanged: (index, reason) {
+              onPageChanged(index);
+            },
+          ),
+          items: tournaments.map((tournament) {
+            return Builder(
+              builder: (BuildContext context) {
+                return _buildAdminTournamentCard(context, tournament, cardType);
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 10),
+        // Page indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: tournaments.asMap().entries.map((entry) {
+            return GestureDetector(
+              onTap: () => carouselController.animateToPage(entry.key),
+              child: Container(
+                width: currentIndex == entry.key ? 12.0 : 8.0,
+                height: 8.0,
+                margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4.0),
+                  color: currentIndex == entry.key
+                      ? AppTheme.primaryColor
+                      : Colors.grey.withOpacity(0.4),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  // Admin Tournament Card Builder
+  Widget _buildAdminTournamentCard(
+    BuildContext context,
+    Tournament tournament,
+    String cardType,
+  ) {
+    Color statusColor;
+    String statusLabel;
+    IconData statusIcon;
+
+    switch (cardType) {
+      case 'upcoming':
+        statusColor = const Color(0xFF3498DB);
+        statusLabel = 'UPCOMING';
+        statusIcon = Icons.schedule;
+        break;
+      case 'ongoing':
+        statusColor = const Color(0xFFE74C3C);
+        statusLabel = 'LIVE';
+        statusIcon = Icons.play_circle_filled;
+        break;
+      case 'completed':
+        statusColor = const Color(0xFF27AE60);
+        statusLabel = 'COMPLETED';
+        statusIcon = Icons.check_circle;
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusLabel = 'UNKNOWN';
+        statusIcon = Icons.info;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TournamentDetailsPage(tournament: tournament),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 2,
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background gradient based on tournament type
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      statusColor.withOpacity(0.8),
+                      statusColor.withOpacity(0.6),
+                    ],
+                  ),
+                ),
+              ),
+              // Tournament image if available
+              if (tournament.imageUrl?.isNotEmpty == true)
+                Opacity(
+                  opacity: 0.3,
+                  child: Image.asset(
+                    tournament.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(),
+                  ),
+                ),
+              // Content overlay
+              Positioned(
+                bottom: 20,
+                left: 15,
+                right: 15,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tournament.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            tournament.location,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(tournament.startDate),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Status chip
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(statusIcon, size: 12, color: statusColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        statusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Participants count
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.people, size: 12, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${tournament.currentParticipants}/${tournament.maxParticipants}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
