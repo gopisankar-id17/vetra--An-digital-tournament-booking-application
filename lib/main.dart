@@ -10,14 +10,10 @@ import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/broadcast_message_screen.dart';
 import 'screens/users/user_login_page.dart';
 import 'screens/users/user_signup_page.dart';
-import 'screens/users/user_dashboard_screen.dart';
 import 'screens/users/user_dashboard.dart';
-import 'screens/users/tournament_details_screen.dart';
-import 'screens/users/tournament_search_screen.dart';
 import 'screens/users/notification_center_screen.dart';
 import 'screens/users/team_chat_screen.dart';
 import 'screens/users/leaderboard_screen.dart';
-import 'screens/users/booking_success_screen.dart';
 import 'screens/users/profile_customization_screen.dart';
 import 'screens/users/help_support_screen.dart';
 import 'utils/app_theme.dart';
@@ -54,7 +50,6 @@ class MyApp extends StatelessWidget {
         '/user-login': (context) => const UserLoginPage(),
         '/user-signup': (context) => const UserSignupPage(),
         '/user-dashboard': (context) => const UserDashboardPage(),
-        '/user': (context) => const UserDashboardScreen(),
         '/user-notifications': (context) => const NotificationCenterScreen(),
         '/user-team-chat': (context) => const TeamChatScreen(),
         '/user-leaderboard': (context) => const LeaderboardScreen(),
