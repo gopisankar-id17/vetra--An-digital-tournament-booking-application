@@ -44,7 +44,7 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -57,55 +57,9 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analytics Dashboard'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pop(); // Just pop back to previous screen
-          },
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textMediumColor,
-          indicatorColor: AppTheme.primaryColor,
-          tabs: const [
-            Tab(text: 'Overview'),
-            Tab(text: 'Tournaments'),
-            Tab(text: 'Users'),
-          ],
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            initialValue: _selectedPeriod,
-            icon: const Icon(Icons.calendar_today),
-            tooltip: 'Select time period',
-            onSelected: (String value) {
-              setState(() {
-                _selectedPeriod = value;
-                // In a real app, you'd fetch new data for the selected period
-              });
-            },
-            itemBuilder: (BuildContext context) => _periodOptions
-                .map(
-                  (String period) =>
-                      PopupMenuItem<String>(value: period, child: Text(period)),
-                )
-                .toList(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: 'Export data',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Exporting analytics data...'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-        ],
+        // No title, since the title is provided by the AdminDashboardScreen
+        automaticallyImplyLeading: false, // No back button
+        
       ),
       body: SafeArea(
         child: TabBarView(
@@ -114,6 +68,7 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen>
             _buildOverviewTab(),
             _buildTournamentsTab(),
             _buildUsersTab(),
+            _buildBookingsTab(),
           ],
         ),
       ),
@@ -1016,5 +971,362 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen>
 
   String _formatLabelsForChart(List<String> labels) {
     return '[${labels.map((label) => "'$label'").join(',')}]';
+  }
+
+  Widget _buildBookingsTab() {
+    // Sample booking data - in a real app, this would come from Firestore
+    final Map<String, int> bookingsByDay = {
+      'Mon': 42,
+      'Tue': 38,
+      'Wed': 55,
+      'Thu': 47,
+      'Fri': 65,
+      'Sat': 78,
+      'Sun': 62,
+    };
+    
+    final Map<String, int> bookingsByPaymentStatus = {
+      'Pending': 35,
+      'Completed': 180,
+      'Failed': 15,
+      'Refunded': 8,
+    };
+    
+    // Tournament revenue data for revenue by sport type chart
+    final Map<String, double> tournamentBookingRevenue = {
+      'Cricket': 45000,
+      'Football': 32500,
+      'eSports': 28000,
+      'Basketball': 18500,
+      'Others': 12000,
+    };
+    
+    // Sample booking trends by month
+    final List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+    final List<int> bookingCounts = [28, 32, 45, 55, 48, 58, 65, 72, 86];
+    final List<double> revenues = [38000, 42000, 55000, 63000, 58000, 72000, 80000, 95000, 110000];
+    
+    // Get top 5 tournaments by booking count
+    final List<Map<String, dynamic>> topTournaments = [
+      {'name': 'Summer Cricket League', 'bookings': 86, 'revenue': 120000},
+      {'name': 'eSports Pro Tournament', 'bookings': 72, 'revenue': 86400},
+      {'name': 'Basketball Championship', 'bookings': 64, 'revenue': 64000},
+      {'name': 'Football Cup 2025', 'bookings': 58, 'revenue': 72500},
+      {'name': 'Chess Masters', 'bookings': 45, 'revenue': 45000},
+    ];
+    
+    // Sample data based on Firestore schema from screenshot
+    final List<Map<String, dynamic>> recentBookings = [
+      {
+        'id': '3FEDNf9oxjZI7EQvNWjV',
+        'bookingDate': 'September 27, 2025',
+        'captainName': 'Dharwin',
+        'teamName': 'Sentors',
+        'tournamentName': 'Chess',
+        'entryFee': 200,
+        'paymentStatus': 'pending',
+      },
+      {
+        'id': '4eMxBcw5GBjZ29YUSuKB',
+        'bookingDate': 'September 25, 2025',
+        'captainName': 'Rajesh',
+        'teamName': 'Warriors',
+        'tournamentName': 'Cricket Tournament',
+        'entryFee': 500,
+        'paymentStatus': 'completed',
+      },
+      {
+        'id': 'CZzzj702eNvsuTH5vInu',
+        'bookingDate': 'September 20, 2025',
+        'captainName': 'Suresh',
+        'teamName': 'Eagles',
+        'tournamentName': 'Football Cup',
+        'entryFee': 350,
+        'paymentStatus': 'completed',
+      },
+      {
+        'id': 'Geia7RBtVIuB61TDzCTn',
+        'bookingDate': 'September 18, 2025',
+        'captainName': 'Priya',
+        'teamName': 'Phoenix',
+        'tournamentName': 'Basketball League',
+        'entryFee': 300,
+        'paymentStatus': 'pending',
+      },
+    ];
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPeriodHeader(),
+          const SizedBox(height: 16),
+          
+          // Booking summary statistics
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  'Total Bookings',
+                  _totalBookings.toString(),
+                  Icons.calendar_today,
+                  Colors.blue,
+                  'Last 30 days',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryCard(
+                  'Revenue',
+                  '₹${_formatNumber(_totalRevenue)}',
+                  Icons.currency_rupee,
+                  Colors.green,
+                  '+${_revenueGrowth.toStringAsFixed(1)}%',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Booking conversion rate and average booking value
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  'Conversion Rate',
+                  '78%',
+                  Icons.trending_up,
+                  Colors.orange,
+                  '6% increase',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryCard(
+                  'Avg. Booking Value',
+                  '₹${(_totalRevenue / _totalBookings).round()}',
+                  Icons.shopping_cart,
+                  Colors.purple,
+                  'Per booking',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Booking trends chart
+          _buildChartCard(
+            title: 'Booking Trends',
+            height: 250,
+            child: Center(
+              child: Image.network(
+                'https://quickchart.io/chart?c={type:%27line%27,data:{labels:${_formatLabelsForChart(months)},datasets:[{label:%27Bookings%27,data:[${bookingCounts.join(',')}],borderColor:%27%236f42c1%27,fill:false},{label:%27Revenue%20(₹1000s)%27,data:[${revenues.map((r) => r/1000).join(',')}],borderColor:%27%2328a745%27,fill:false}]},options:{scales:{yAxes:[{ticks:{beginAtZero:true}}]}}}',
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Weekly booking distribution
+          _buildChartCard(
+            title: 'Weekly Booking Distribution',
+            height: 220,
+            child: Center(
+              child: Image.network(
+                'https://quickchart.io/chart?c={type:%27bar%27,data:{labels:${_formatLabelsForChart(bookingsByDay.keys.toList())},datasets:[{label:%27Bookings%27,data:[${bookingsByDay.values.join(',')}],backgroundColor:%27%236f42c1%27}]},options:{scales:{yAxes:[{ticks:{beginAtZero:true}}]}}}',
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Payment status distribution
+          _buildChartCard(
+            title: 'Payment Status Distribution',
+            height: 280,
+            child: Center(
+              child: Image.network(
+                'https://quickchart.io/chart?c={type:%27doughnut%27,data:{labels:${_formatLabelsForChart(bookingsByPaymentStatus.keys.toList())},datasets:[{data:[${bookingsByPaymentStatus.values.join(',')}],backgroundColor:[%27%23ffc107%27,%27%2328a745%27,%27%23dc3545%27,%27%236c757d%27]}]},options:{plugins:{doughnutlabel:{labels:[{text:%27${bookingsByPaymentStatus.values.reduce((a, b) => a + b)}%27,font:{size:20}},{text:%27total%27}]}}}}',
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Revenue by tournament type
+          _buildChartCard(
+            title: 'Revenue by Tournament Type',
+            height: 280,
+            child: Center(
+              child: Image.network(
+                'https://quickchart.io/chart?c={type:%27pie%27,data:{labels:${_formatLabelsForChart(tournamentBookingRevenue.keys.toList())},datasets:[{data:[${tournamentBookingRevenue.values.join(',')}],backgroundColor:[%27%234e73df%27,%27%231cc88a%27,%27%2336b9cc%27,%27%23f6c23e%27,%27%23e74a3b%27]}]}}',
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Top tournaments by booking
+          Text(
+            'Top Tournaments by Bookings',
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                  color: AppTheme.textDarkColor,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: topTournaments.map((tournament) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            tournament['name'],
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${tournament['bookings']} bookings',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '₹${_formatNumber(tournament['revenue'])}',
+                            style: TextStyle(
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Recent bookings table - using real Firestore schema
+          Text(
+            'Recent Bookings',
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                  color: AppTheme.textDarkColor,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            elevation: 2,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columnSpacing: 20,
+                columns: const [
+                  DataColumn(label: Text('Date')),
+                  DataColumn(label: Text('Tournament')),
+                  DataColumn(label: Text('Captain')),
+                  DataColumn(label: Text('Team')),
+                  DataColumn(label: Text('Entry Fee')),
+                  DataColumn(label: Text('Status')),
+                ],
+                rows: recentBookings.map((booking) {
+                  Color statusColor;
+                  switch(booking['paymentStatus']) {
+                    case 'pending':
+                      statusColor = Colors.orange;
+                      break;
+                    case 'completed':
+                      statusColor = Colors.green;
+                      break;
+                    case 'failed':
+                      statusColor = Colors.red;
+                      break;
+                    default:
+                      statusColor = Colors.grey;
+                  }
+                  
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(booking['bookingDate'])),
+                      DataCell(Text(booking['tournamentName'])),
+                      DataCell(Text(booking['captainName'])),
+                      DataCell(Text(booking['teamName'])),
+                      DataCell(Text('₹${booking['entryFee']}')),
+                      DataCell(
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            booking['paymentStatus'].toString().toUpperCase(),
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

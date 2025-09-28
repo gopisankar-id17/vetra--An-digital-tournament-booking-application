@@ -10,6 +10,7 @@ import 'add_tournament_page.dart';
 import 'tournament_details_page.dart';
 import 'tournaments_list_page.dart';
 import 'tournament_requests_page.dart';
+import 'admin_analytics_screen.dart';
 import 'package:vetra/screens/admin/add_video_page.dart'; // Adjust the path as per your project structure
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -231,7 +232,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 4:
         return const Center(child: Text('Manage Users - Coming Soon!', style: TextStyle(fontSize: 22)));
       case 5:
-        return const Center(child: Text('Analytics Dashboard - Coming Soon!', style: TextStyle(fontSize: 22)));
+        // Analytics Dashboard
+        return const AdminAnalyticsScreen();
       case 6:
         return _buildReportsContent();
       case 7:
