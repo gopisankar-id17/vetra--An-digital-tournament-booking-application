@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 
 class SearchPage extends StatefulWidget {
   final String? initialSportFilter;
-  const SearchPage({super.key, this.initialSportFilter});
+  final String? initialStatusFilter;
+  const SearchPage({super.key, this.initialSportFilter, this.initialStatusFilter});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -44,6 +45,11 @@ class _SearchPageState extends State<SearchPage> {
 
     if (widget.initialSportFilter != null) {
       _selectedSport = widget.initialSportFilter!;
+      _showFilters = true;
+    }
+    
+    if (widget.initialStatusFilter != null) {
+      _selectedStatus = widget.initialStatusFilter!;
       _showFilters = true;
     }
   }
@@ -86,11 +92,25 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          if (_showFilters) _buildFilters(),
-          Expanded(
+      appBar: AppBar(
+        title: const Text(
+          'Search Tournaments',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        shadowColor: Colors.grey.withOpacity(0.1),
+        automaticallyImplyLeading: false, // Remove back button for tab-based navigation
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildSearchBar()),
+          if (_showFilters) SliverToBoxAdapter(child: _buildFilters()),
+          SliverFillRemaining(
             child: _buildTournamentList(),
           ),
         ],
@@ -178,42 +198,43 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           const Text(
             'Filters',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildFilterDropdown(
             'Sport',
             _sportsFilterOptions,
             _selectedSport,
             (value) => setState(() => _selectedSport = value!),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildFilterDropdown(
             'Status',
             ['All', 'upcoming', 'ongoing', 'completed'],
             _selectedStatus,
             (value) => setState(() => _selectedStatus = value!),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildFilterDropdown(
             'Format',
             ['All', 'singleElimination', 'doubleElimination', 'roundRobin', 'swiss'],
             _selectedFormat,
             (value) => setState(() => _selectedFormat = value!),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildFilterDropdown(
             'Mode',
             ['All', 'offline', 'online'],
             _selectedMode,
             (value) => setState(() => _selectedMode = value!),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -246,6 +267,7 @@ class _SearchPageState extends State<SearchPage> {
             child: const Text('Reset Filters'),
           ),
         ],
+        ),
       ),
     );
   }
@@ -296,14 +318,20 @@ class _SearchPageState extends State<SearchPage> {
         if (tournaments.isEmpty) {
           return const Center(child: Text('No tournaments match your filters'));
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: tournaments.length,
-          itemBuilder: (context, index) {
-            var tournament =
-                tournaments[index].data() as Map<String, dynamic>;
-            return _buildTournamentCard(tournament, tournaments[index].id);
-          },
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: tournaments.length,
+                itemBuilder: (context, index) {
+                  var tournament =
+                      tournaments[index].data() as Map<String, dynamic>;
+                  return _buildTournamentCard(tournament, tournaments[index].id);
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -312,6 +340,7 @@ class _SearchPageState extends State<SearchPage> {
   List<QueryDocumentSnapshot> _applyFilters(
       List<QueryDocumentSnapshot> tournaments) {
     String searchTerm = _searchController.text.toLowerCase();
+    DateTime now = DateTime.now();
 
     return tournaments.where((doc) {
       var tournament = doc.data() as Map<String, dynamic>;
@@ -325,7 +354,13 @@ class _SearchPageState extends State<SearchPage> {
           (tournament['categories'] as List<dynamic>? ?? [])
               .map((c) => c.toString().toLowerCase())
               .toList();
-      String status = tournament['status']?.toString().toLowerCase() ?? '';
+      
+      // Get tournament dates for status filtering
+      Timestamp? startTimestamp = tournament['startDate'] as Timestamp?;
+      Timestamp? endTimestamp = tournament['endDate'] as Timestamp?;
+      DateTime? startDate = startTimestamp?.toDate();
+      DateTime? endDate = endTimestamp?.toDate();
+      
       String format = tournament['format']?.toString().toLowerCase() ?? '';
       String mode = tournament['mode']?.toString().toLowerCase() ?? '';
       double entryFee = (tournament['entryFee'] as num?)?.toDouble() ?? 0;
@@ -341,8 +376,22 @@ class _SearchPageState extends State<SearchPage> {
         return false;
       }
 
-      if (_selectedStatus != 'All' && status != _selectedStatus.toLowerCase()) {
-        return false;
+      // Apply status filter using date logic (same as dashboard)
+      if (_selectedStatus != 'All') {
+        if (_selectedStatus == 'upcoming') {
+          if (startDate == null || !startDate.isAfter(now)) {
+            return false;
+          }
+        } else if (_selectedStatus == 'ongoing') {
+          if (startDate == null || endDate == null || 
+              !(now.isAfter(startDate) && now.isBefore(endDate))) {
+            return false;
+          }
+        } else if (_selectedStatus == 'completed') {
+          if (endDate == null || !now.isAfter(endDate)) {
+            return false;
+          }
+        }
       }
 
       if (_selectedFormat != 'All' && format != _selectedFormat.toLowerCase()) {
