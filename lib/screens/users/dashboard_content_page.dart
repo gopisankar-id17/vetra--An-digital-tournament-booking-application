@@ -505,432 +505,417 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
   }
 
   Widget _buildTrendingTournamentCard(
-      BuildContext context, Map<String, dynamic> tournament) {
-    String title = tournament['name'] ?? 'Unknown Tournament';
-    String imageUrl = tournament['imageUrl'] ?? '';
-    String tournamentId = tournament['id'] ?? '';
-    int currentParticipants = tournament['currentParticipants'] ?? 0;
-    int maxParticipants = tournament['maxParticipants'] ?? 1;
-    double participationRate =
-        (maxParticipants > 0) ? (currentParticipants / maxParticipants) * 100 : 0;
+    BuildContext context, Map<String, dynamic> tournament) {
+  String title = tournament['name'] ?? 'Unknown Tournament';
+  String imageUrl = tournament['imageUrl'] ?? '';
+  String tournamentId = tournament['id'] ?? '';
+  int currentParticipants = tournament['currentParticipants'] ?? 0;
+  int maxParticipants = tournament['maxParticipants'] ?? 1;
+  double participationRate =
+      (maxParticipants > 0) ? (currentParticipants / maxParticipants) * 100 : 0;
 
-    String status;
-    Color tagColor;
+  String status;
+  Color tagColor;
 
-    if (participationRate >= 90) {
-      status = 'HIGH DEMAND';
-      tagColor = Colors.red;
-    } else if (participationRate >= 70) {
-      status = 'POPULAR';
-      tagColor = Colors.orange;
-    } else {
-      status = 'TRENDING';
-      tagColor = const Color(0xFF6f42c1);
-    }
+  if (participationRate >= 90) {
+    status = 'HIGH DEMAND';
+    tagColor = Colors.red;
+  } else if (participationRate >= 70) {
+    status = 'POPULAR';
+    tagColor = Colors.orange;
+  } else {
+    status = 'TRENDING';
+    tagColor = const Color(0xFF6f42c1);
+  }
 
-    bool isExpanded = _expandedCards.contains(tournamentId);
+  bool isExpanded = _expandedCards.contains(tournamentId);
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isExpanded) {
-            _expandedCards.remove(tournamentId);
-          } else {
-            _expandedCards.add(tournamentId);
-          }
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              imageUrl.isNotEmpty
-                  ? Image.network(imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildFallbackImage(title, tagColor))
-                  : _buildFallbackImage(title, tagColor),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.0),
-                      Colors.black.withOpacity(0.7)
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 10,
-                left: 10,
-                right: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$currentParticipants/$maxParticipants participants (${participationRate.toStringAsFixed(0)}% full)',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                    
-                    // Show buttons when expanded
-                    if (isExpanded) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.visibility, size: 14),
-                              label: const Text('View', style: TextStyle(fontSize: 12)),
-                              onPressed: () {
-                                _showFullTournamentDetails(context, tournament);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[600],
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.how_to_reg, size: 14),
-                              label: const Text('Register', style: TextStyle(fontSize: 12)),
-                              onPressed: () {
-                                _showBookingDialog(tournament, tournamentId);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6f42c1),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+  return GestureDetector(
+    onTap: () {
+      // Navigate to search page when card is tapped
+      _navigateToSearch(context);
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            imageUrl.isNotEmpty
+                ? Image.network(imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildFallbackImage(title, tagColor))
+                : _buildFallbackImage(title, tagColor),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.7)
                   ],
                 ),
               ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Chip(
-                  label: Text(status,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10)),
-                  backgroundColor: tagColor,
-                  padding: EdgeInsets.zero,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpcomingTournamentPhotoCard(
-      BuildContext context, Map<String, dynamic> tournament) {
-    String title = tournament['name'] ?? 'Unknown Tournament';
-    String imageUrl = tournament['imageUrl'] ?? '';
-    String tournamentId = tournament['id'] ?? '';
-    Timestamp startDate = tournament['startDate'] as Timestamp;
-    String date = _dateFormat.format(startDate.toDate());
-    
-    bool isExpanded = _expandedCards.contains(tournamentId);
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isExpanded) {
-            _expandedCards.remove(tournamentId);
-          } else {
-            _expandedCards.add(tournamentId);
-          }
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              imageUrl.isNotEmpty
-                  ? Image.network(imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildFallbackImage(title, const Color(0xFF6f42c1)))
-                  : _buildFallbackImage(title, const Color(0xFF6f42c1)),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.0),
-                      Colors.black.withOpacity(0.6)
-                    ],
+            ),
+            Positioned(
+              bottom: 10,
+              left: 10,
+              right: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ),
-              Positioned(
-                bottom: 30,
-                left: 10,
-                right: 10,
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Positioned(
-                bottom: 10,
-                left: 10,
-                right: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                  const SizedBox(height: 4),
+                  Text(
+                    '$currentParticipants/$maxParticipants participants (${participationRate.toStringAsFixed(0)}% full)',
+                    style:
+                        const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  
+                  // Show buttons when expanded
+                  if (isExpanded) ...[
+                    const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today,
-                            size: 12, color: Colors.white70),
-                        const SizedBox(width: 4),
-                        Text(
-                          date,
-                          style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.visibility, size: 14),
+                            label: const Text('View', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showFullTournamentDetails(context, tournament);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.how_to_reg, size: 14),
+                            label: const Text('Register', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showBookingDialog(tournament, tournamentId);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6f42c1),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    
-                    // Show buttons when expanded
-                    if (isExpanded) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.visibility, size: 14),
-                              label: const Text('View', style: TextStyle(fontSize: 12)),
-                              onPressed: () {
-                                _showFullTournamentDetails(context, tournament);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[600],
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.how_to_reg, size: 14),
-                              label: const Text('Register', style: TextStyle(fontSize: 12)),
-                              onPressed: () {
-                                _showBookingDialog(tournament, tournamentId);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6f42c1),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  ],
+                ],
+              ),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Chip(
+                label: Text(status,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10)),
+                backgroundColor: tagColor,
+                padding: EdgeInsets.zero,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            )
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildUpcomingTournamentPhotoCard(
+    BuildContext context, Map<String, dynamic> tournament) {
+  String title = tournament['name'] ?? 'Unknown Tournament';
+  String imageUrl = tournament['imageUrl'] ?? '';
+  String tournamentId = tournament['id'] ?? '';
+  Timestamp startDate = tournament['startDate'] as Timestamp;
+  String date = _dateFormat.format(startDate.toDate());
+  
+  bool isExpanded = _expandedCards.contains(tournamentId);
+
+  return GestureDetector(
+    onTap: () {
+      // Navigate to search page with upcoming filter when card is tapped
+      _navigateToSearch(context, status: 'upcoming');
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            imageUrl.isNotEmpty
+                ? Image.network(imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildFallbackImage(title, const Color(0xFF6f42c1)))
+                : _buildFallbackImage(title, const Color(0xFF6f42c1)),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.6)
                   ],
                 ),
               ),
-              const Positioned(
-                top: 10,
-                right: 10,
-                child: Chip(
-                  label: Text('UPCOMING',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10)),
-                  backgroundColor: Color(0xFF6f42c1),
-                  padding: EdgeInsets.zero,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOngoingTournamentPhotoCard(
-      BuildContext context, Map<String, dynamic> tournament) {
-    String title = tournament['name'] ?? 'Unknown Tournament';
-    String imageUrl = tournament['imageUrl'] ?? '';
-    String tournamentId = tournament['id'] ?? '';
-    
-    bool isExpanded = _expandedCards.contains(tournamentId);
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isExpanded) {
-            _expandedCards.remove(tournamentId);
-          } else {
-            _expandedCards.add(tournamentId);
-          }
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              imageUrl.isNotEmpty
-                  ? Image.network(imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildFallbackImage(title, const Color(0xFF8a63d2)))
-                  : _buildFallbackImage(title, const Color(0xFF8a63d2)),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.0),
-                      Colors.black.withOpacity(0.6)
+            ),
+            Positioned(
+              bottom: 30,
+              left: 10,
+              right: 10,
+              child: Text(
+                title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Positioned(
+              bottom: 10,
+              left: 10,
+              right: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today,
+                          size: 12, color: Colors.white70),
+                      const SizedBox(width: 4),
+                      Text(
+                        date,
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
                     ],
                   ),
-                ),
-              ),
-              Positioned(
-                bottom: 10,
-                left: 10,
-                right: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  
+                  // Show buttons when expanded
+                  if (isExpanded) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.visibility, size: 14),
+                            label: const Text('View', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showFullTournamentDetails(context, tournament);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.how_to_reg, size: 14),
+                            label: const Text('Register', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showBookingDialog(tournament, tournamentId);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6f42c1),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    
-                    // Show buttons when expanded
-                    if (isExpanded) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.visibility, size: 14),
-                              label: const Text('View', style: TextStyle(fontSize: 12)),
-                              onPressed: () {
-                                _showFullTournamentDetails(context, tournament);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[600],
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.how_to_reg, size: 14),
-                              label: const Text('Register', style: TextStyle(fontSize: 12)),
-                              onPressed: () {
-                                _showBookingDialog(tournament, tournamentId);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6f42c1),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  ],
+                ],
+              ),
+            ),
+            const Positioned(
+              top: 10,
+              right: 10,
+              child: Chip(
+                label: Text('UPCOMING',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10)),
+                backgroundColor: Color(0xFF6f42c1),
+                padding: EdgeInsets.zero,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            )
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildOngoingTournamentPhotoCard(
+    BuildContext context, Map<String, dynamic> tournament) {
+  String title = tournament['name'] ?? 'Unknown Tournament';
+  String imageUrl = tournament['imageUrl'] ?? '';
+  String tournamentId = tournament['id'] ?? '';
+  
+  bool isExpanded = _expandedCards.contains(tournamentId);
+
+  return GestureDetector(
+    onTap: () {
+      // Navigate to search page with ongoing filter when card is tapped
+      _navigateToSearch(context, status: 'ongoing');
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            imageUrl.isNotEmpty
+                ? Image.network(imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildFallbackImage(title, const Color(0xFF8a63d2)))
+                : _buildFallbackImage(title, const Color(0xFF8a63d2)),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.6)
                   ],
                 ),
               ),
-              const Positioned(
-                top: 10,
-                right: 10,
-                child: Chip(
-                  label: Text('LIVE',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10)),
-                  backgroundColor: Color(0xFF8a63d2),
-                  padding: EdgeInsets.zero,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              )
-            ],
-          ),
+            ),
+            Positioned(
+              bottom: 10,
+              left: 10,
+              right: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  // Show buttons when expanded
+                  if (isExpanded) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.visibility, size: 14),
+                            label: const Text('View', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showFullTournamentDetails(context, tournament);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.how_to_reg, size: 14),
+                            label: const Text('Register', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showBookingDialog(tournament, tournamentId);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6f42c1),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const Positioned(
+              top: 10,
+              right: 10,
+              child: Chip(
+                label: Text('LIVE',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10)),
+                backgroundColor: Color(0xFF8a63d2),
+                padding: EdgeInsets.zero,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            )
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildEmptyState(String message, IconData icon) {
     return Container(

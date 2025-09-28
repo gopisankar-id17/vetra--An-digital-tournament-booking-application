@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vetra/screens/users/bookings_page.dart'; // Add this new import
+import 'package:vetra/screens/users/bookings_page.dart';
 import 'package:vetra/screens/users/dashboard_content_page.dart';
 import 'package:vetra/screens/users/search_page.dart';
 import 'package:vetra/screens/users/tournament_videos_page.dart';
@@ -24,7 +24,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   void _navigateToSearchWithSportFilter(String sport) {
     setState(() {
       _initialSportFilter = sport;
+
       _initialStatusFilter = null;
+
       _selectedIndex = 1; // Index of the Search Page
     });
   }
@@ -49,18 +51,14 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // --- ✅ UPDATED THIS LIST ---
     final List<Widget> pages = [
       DashboardContentPage(onSportSelected: _navigateToSearchWithSportFilter),
       SearchPage(initialSportFilter: _initialSportFilter),
-      const BookingsPage(), // Replaced placeholder with the actual page
+      const BookingsPage(),
       const TournamentVideosPage(),
-      const Center(
-        child: Text(
-          'My Profile - Coming Soon!',
-          style: TextStyle(fontSize: 22),
-        ),
-      ),
+
+      const UserProfileScreen(), // Use actual profile screen instead of placeholder
+
     ];
 
     return Scaffold(
@@ -74,8 +72,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
-                // Navigate to profile page when icon is tapped
-                _onBottomNavTap(4);
+
+                _onBottomNavTap(4); // Navigate to profile page (index 4)
+
               },
               child: const CircleAvatar(
                 backgroundColor: Colors.white,
@@ -112,7 +111,12 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             icon: Icon(Icons.video_library),
             label: 'Videos',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+
         ],
       ),
     );
@@ -204,13 +208,12 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               _onBottomNavTap(3);
             },
           ),
-          // --- ✅ UPDATED PROFILE NAVIGATION ---
           ListTile(
             leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
             title: const Text('My Profile'),
             onTap: () {
               Navigator.pop(context);
-              _onBottomNavTap(4); // Corrected index to 4
+              _onBottomNavTap(4);
             },
           ),
           ListTile(
@@ -218,6 +221,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             title: const Text('About Us'),
             onTap: () {
               Navigator.pop(context);
+
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AboutUsPage()),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-
-// Note: No other pages are imported here.
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class SearchPage extends StatefulWidget {
   final String? initialSportFilter;
@@ -18,6 +18,7 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ImagePicker _imagePicker = ImagePicker();
 
   // Filter states
   String _selectedStatus = 'All';
@@ -36,12 +37,20 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _playerCountController = TextEditingController();
+  final TextEditingController _transactionIdController = TextEditingController();
+  
+  // Payment proof image
+  File? _paymentProofImage;
+
+  // Map to track user's booking status for each tournament
+  Map<String, bool> _userBookings = {};
 
   @override
   void initState() {
     super.initState();
     _emailController.text = _auth.currentUser?.email ?? '';
     _loadSportFilterOptions();
+    _loadUserBookings(); // Load user's existing bookings
 
     if (widget.initialSportFilter != null) {
       _selectedSport = widget.initialSportFilter!;
@@ -54,11 +63,42 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  // Load user's existing bookings
+  Future<void> _loadUserBookings() async {
+    try {
+      String? userId = _auth.currentUser?.uid;
+      if (userId == null) return;
+
+      QuerySnapshot bookingsSnapshot = await _firestore
+          .collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      Map<String, bool> userBookings = {};
+      for (var doc in bookingsSnapshot.docs) {
+        var booking = doc.data() as Map<String, dynamic>;
+        String tournamentId = booking['tournamentId'];
+        // Consider both pending and approved bookings as "booked"
+        if (booking['status'] == 'pending' || booking['status'] == 'approved') {
+          userBookings[tournamentId] = true;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _userBookings = userBookings;
+        });
+      }
+    } catch (e) {
+      print("Error loading user bookings: $e");
+    }
+  }
+
   // Dynamically load sports categories from Firestore
   Future<void> _loadSportFilterOptions() async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('tournaments').get();
-      Set<String> sports = {'All'}; // Use a Set to avoid duplicates
+      Set<String> sports = {'All'};
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         if (data.containsKey('categories') && data['categories'] is List) {
@@ -85,6 +125,7 @@ class _SearchPageState extends State<SearchPage> {
     _phoneController.dispose();
     _emailController.dispose();
     _playerCountController.dispose();
+    _transactionIdController.dispose();
     super.dispose();
   }
 
@@ -92,20 +133,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          'Search Tournaments',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        shadowColor: Colors.grey.withOpacity(0.1),
-        automaticallyImplyLeading: false, // Remove back button for tab-based navigation
-      ),
+  
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: _buildSearchBar()),
@@ -138,13 +166,7 @@ class _SearchPageState extends State<SearchPage> {
             decoration: InputDecoration(
               hintText: 'Search tournaments...',
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() {});
-                },
-              ),
+              
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -164,8 +186,7 @@ class _SearchPageState extends State<SearchPage> {
                       _showFilters = !_showFilters;
                     });
                   },
-                  icon:
-                      Icon(_showFilters ? Icons.filter_alt_off : Icons.filter_alt),
+                  icon: Icon(_showFilters ? Icons.filter_alt_off : Icons.filter_alt),
                   label: Text(_showFilters ? 'Hide Filters' : 'Show Filters'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6f42c1),
@@ -202,104 +223,118 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          const Text(
-            'Filters',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          _buildFilterDropdown(
-            'Sport',
-            _sportsFilterOptions,
-            _selectedSport,
-            (value) => setState(() => _selectedSport = value!),
-          ),
-          const SizedBox(height: 8),
-          _buildFilterDropdown(
-            'Status',
-            ['All', 'upcoming', 'ongoing', 'completed'],
-            _selectedStatus,
-            (value) => setState(() => _selectedStatus = value!),
-          ),
-          const SizedBox(height: 8),
-          _buildFilterDropdown(
-            'Format',
-            ['All', 'singleElimination', 'doubleElimination', 'roundRobin', 'swiss'],
-            _selectedFormat,
-            (value) => setState(() => _selectedFormat = value!),
-          ),
-          const SizedBox(height: 8),
-          _buildFilterDropdown(
-            'Mode',
-            ['All', 'offline', 'online'],
-            _selectedMode,
-            (value) => setState(() => _selectedMode = value!),
-          ),
-          const SizedBox(height: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Max Entry Fee: ₹${_maxEntryFee.toInt()}'),
-              Slider(
-                value: _maxEntryFee,
-                min: 0,
-                max: 10000,
-                divisions: 20,
-                onChanged: (value) => setState(() => _maxEntryFee = value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _selectedSport = 'All';
-                _selectedStatus = 'All';
-                _selectedFormat = 'All';
-                _selectedMode = 'All';
-                _maxEntryFee = 10000;
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[300],
-              foregroundColor: Colors.black87,
-              minimumSize: const Size(double.infinity, 40),
+            const Text(
+              'Filters',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            child: const Text('Reset Filters'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            _buildFilterDropdown(
+              'Sport',
+              _sportsFilterOptions,
+              _selectedSport,
+              (value) => setState(() => _selectedSport = value!),
+            ),
+            const SizedBox(height: 8),
+            _buildFilterDropdown(
+              'Status',
+              ['All', 'upcoming', 'ongoing', 'completed'],
+              _selectedStatus,
+              (value) => setState(() => _selectedStatus = value!),
+            ),
+            const SizedBox(height: 8),
+            _buildFilterDropdown(
+              'Format',
+              ['All', 'singleElimination', 'doubleElimination', 'roundRobin', 'swiss'],
+              _selectedFormat,
+              (value) => setState(() => _selectedFormat = value!),
+            ),
+            const SizedBox(height: 8),
+            _buildFilterDropdown(
+              'Mode',
+              ['All', 'offline', 'online'],
+              _selectedMode,
+              (value) => setState(() => _selectedMode = value!),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Max Entry Fee: ₹${_maxEntryFee.toInt()}'),
+                Slider(
+                  value: _maxEntryFee,
+                  min: 0,
+                  max: 10000,
+                  divisions: 20,
+                  onChanged: (value) => setState(() => _maxEntryFee = value),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedSport = 'All';
+                  _selectedStatus = 'All';
+                  _selectedFormat = 'All';
+                  _selectedMode = 'All';
+                  _maxEntryFee = 10000;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                foregroundColor: Colors.black87,
+                minimumSize: const Size(double.infinity, 40),
+              ),
+              child: const Text('Reset Filters'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFilterDropdown(String label, List<String> options,
-      String value, ValueChanged<String?> onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('$label:'),
-        const SizedBox(height: 4),
-        DropdownButtonFormField<String>(
-          value: options.contains(value) ? value : 'All',
-          items: options.map((option) {
-            return DropdownMenuItem(
-              value: option,
-              child: Text(option == 'All'
-                  ? 'All'
-                  : option.replaceAll(RegExp('([A-Z])'), ' \$1').trim()),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+ Widget _buildFilterDropdown(String label, List<String> options,
+    String value, ValueChanged<String?> onChanged) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('$label:'),
+      const SizedBox(height: 4),
+      DropdownButtonFormField<String>(
+        value: options.contains(value) ? value : 'All',
+        items: options.map((option) {
+          return DropdownMenuItem(
+            value: option,
+            child: Text(option == 'All'
+                ? 'All'
+                : _formatDisplayText(option)),
+          );
+        }).toList(),
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
+String _formatDisplayText(String text) {
+  // Handle camelCase and PascalCase conversion to readable text
+  String formatted = text.replaceAllMapped(
+    RegExp('([a-z])([A-Z])'),
+    (match) => '${match.group(1)} ${match.group(2)}'
+  );
+  
+  // Capitalize first letter and make the rest lowercase except for the first letter of each word
+  List<String> words = formatted.split(' ');
+  return words.map((word) {
+    if (word.isEmpty) return word;
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }).join(' ');
+}
 
   Widget _buildTournamentList() {
     return StreamBuilder<QuerySnapshot>(
@@ -325,9 +360,9 @@ class _SearchPageState extends State<SearchPage> {
                 padding: const EdgeInsets.all(16),
                 itemCount: tournaments.length,
                 itemBuilder: (context, index) {
-                  var tournament =
-                      tournaments[index].data() as Map<String, dynamic>;
-                  return _buildTournamentCard(tournament, tournaments[index].id);
+                  var tournament = tournaments[index].data() as Map<String, dynamic>;
+                  String tournamentId = tournaments[index].id;
+                  return _buildTournamentCard(tournament, tournamentId);
                 },
               ),
             ),
@@ -337,8 +372,7 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  List<QueryDocumentSnapshot> _applyFilters(
-      List<QueryDocumentSnapshot> tournaments) {
+  List<QueryDocumentSnapshot> _applyFilters(List<QueryDocumentSnapshot> tournaments) {
     String searchTerm = _searchController.text.toLowerCase();
     DateTime now = DateTime.now();
 
@@ -346,16 +380,13 @@ class _SearchPageState extends State<SearchPage> {
       var tournament = doc.data() as Map<String, dynamic>;
 
       String name = tournament['name']?.toString().toLowerCase() ?? '';
-      String description =
-          tournament['description']?.toString().toLowerCase() ?? '';
+      String description = tournament['description']?.toString().toLowerCase() ?? '';
       String location = tournament['location']?.toString().toLowerCase() ?? '';
       
-      List<String> categories =
-          (tournament['categories'] as List<dynamic>? ?? [])
-              .map((c) => c.toString().toLowerCase())
-              .toList();
+      List<String> categories = (tournament['categories'] as List<dynamic>? ?? [])
+          .map((c) => c.toString().toLowerCase())
+          .toList();
       
-      // Get tournament dates for status filtering
       Timestamp? startTimestamp = tournament['startDate'] as Timestamp?;
       Timestamp? endTimestamp = tournament['endDate'] as Timestamp?;
       DateTime? startDate = startTimestamp?.toDate();
@@ -364,6 +395,11 @@ class _SearchPageState extends State<SearchPage> {
       String format = tournament['format']?.toString().toLowerCase() ?? '';
       String mode = tournament['mode']?.toString().toLowerCase() ?? '';
       double entryFee = (tournament['entryFee'] as num?)?.toDouble() ?? 0;
+
+      // Check if tournament is full
+      int currentParticipants = (tournament['currentParticipants'] as num?)?.toInt() ?? 0;
+      int maxParticipants = (tournament['maxParticipants'] as num?)?.toInt() ?? 0;
+      bool isFull = currentParticipants >= maxParticipants;
 
       if (searchTerm.isNotEmpty &&
           !name.contains(searchTerm) &&
@@ -376,7 +412,6 @@ class _SearchPageState extends State<SearchPage> {
         return false;
       }
 
-      // Apply status filter using date logic (same as dashboard)
       if (_selectedStatus != 'All') {
         if (_selectedStatus == 'upcoming') {
           if (startDate == null || !startDate.isAfter(now)) {
@@ -410,11 +445,14 @@ class _SearchPageState extends State<SearchPage> {
     }).toList();
   }
 
-  // --- The rest of the file (buildTournamentCard, dialogs, etc.) is unchanged ---
-  // [Full code omitted for brevity as it was correct in the previous step]
   Widget _buildTournamentCard(Map<String, dynamic> tournament, String tournamentId) {
     Timestamp startDate = tournament['startDate'] as Timestamp;
     Timestamp endDate = tournament['endDate'] as Timestamp;
+    
+    int currentParticipants = (tournament['currentParticipants'] as num?)?.toInt() ?? 0;
+    int maxParticipants = (tournament['maxParticipants'] as num?)?.toInt() ?? 0;
+    bool isFull = currentParticipants >= maxParticipants;
+    bool isBookedByUser = _userBookings[tournamentId] ?? false;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -456,12 +494,24 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                       ),
                     ),
-                    Chip(
-                      label: Text(
-                        _getStatusText(tournament['status'] ?? ''),
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
-                      ),
-                      backgroundColor: _getStatusColor(tournament['status'] ?? ''),
+                    Column(
+                      children: [
+                        Chip(
+                          label: Text(
+                            _getStatusText(tournament['status'] ?? ''),
+                            style: const TextStyle(color: Colors.white, fontSize: 10),
+                          ),
+                          backgroundColor: _getStatusColor(tournament['status'] ?? ''),
+                        ),
+                        if (isBookedByUser)
+                          Chip(
+                            label: const Text(
+                              'BOOKED',
+                              style: TextStyle(color: Colors.white, fontSize: 8),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -472,8 +522,8 @@ class _SearchPageState extends State<SearchPage> {
                   '${DateFormat.yMMMd().format(startDate.toDate())} - ${DateFormat.yMMMd().format(endDate.toDate())}'),
                 _buildDetailRow(Icons.location_on, tournament['location'] ?? 'Location not specified'),
                 _buildDetailRow(Icons.people, 
-                  '${tournament['currentParticipants'] ?? 0}/${tournament['maxParticipants'] ?? 0} participants'),
-                _buildDetailRow(Icons.attach_money, 'Entry Fee: ₹${tournament['entryFee'] ?? 0}'),
+                  '$currentParticipants/$maxParticipants participants ${isFull ? ' (FULL)' : ''}'),
+                _buildDetailRow(Icons.attach_money, 'Entry Fee: \$${tournament['entryFee'] ?? 0}'),
 
                 const SizedBox(height: 12),
 
@@ -507,13 +557,17 @@ class _SearchPageState extends State<SearchPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
+                        onPressed: isFull || isBookedByUser ? null : () {
                           _showBookingDialog(tournament, tournamentId);
                         },
-                        icon: const Icon(Icons.book_online),
-                        label: const Text('Book Now'),
+                        icon: Icon(isBookedByUser ? Icons.check_circle : Icons.book_online),
+                        label: Text(
+                          isBookedByUser ? 'Booked' : 
+                          isFull ? 'FULL' : 'Book Now'
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6f42c1),
+                          backgroundColor: isBookedByUser ? Colors.green : 
+                                         isFull ? Colors.grey : const Color(0xFF6f42c1),
                           foregroundColor: Colors.white,
                         ),
                       ),
@@ -560,11 +614,13 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   String _formatTournamentFormat(String format) {
-    if (format.isEmpty) return 'N/A';
-    return format.replaceAll(RegExp('([A-Z])'), ' \$1').trim();
-  }
+  if (format.isEmpty) return 'N/A';
+  return _formatDisplayText(format); // Use the same formatting logic
+}
 
   void _showTournamentDetails(Map<String, dynamic> tournament, String tournamentId) {
+    bool isBookedByUser = _userBookings[tournamentId] ?? false;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -574,6 +630,23 @@ class _SearchPageState extends State<SearchPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (isBookedByUser)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green),
+                      SizedBox(width: 8),
+                      Text('You have booked this tournament', 
+                           style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 8),
               Text('Description: ${tournament['description'] ?? 'No description'}'),
               const SizedBox(height: 8),
               Text('Rules: ${tournament['rules'] ?? 'No rules specified'}'),
@@ -595,6 +668,15 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _showBookingDialog(Map<String, dynamic> tournament, String tournamentId) {
+    bool isBookedByUser = _userBookings[tournamentId] ?? false;
+    
+    if (isBookedByUser) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have already booked this tournament!')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -609,6 +691,102 @@ class _SearchPageState extends State<SearchPage> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
+                
+                // QR Code Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Scan QR Code for Payment',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 10),
+                      Image.asset(
+                        'assets/qr.jpg',
+                        height: 150,
+                        width: 150,
+                        errorBuilder: (context, error, stackTrace) => 
+                          Container(
+                            height: 150,
+                            width: 150,
+                            color: Colors.grey[200],
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.qr_code, size: 50, color: Colors.grey),
+                                Text('QR Code not found'),
+                              ],
+                            ),
+                          ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+  'Amount: \$${tournament['entryFee'] ?? 0}',
+  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Transaction ID
+                TextFormField(
+                  controller: _transactionIdController,
+                  decoration: const InputDecoration(
+                    labelText: 'Transaction ID*',
+                    hintText: 'Enter UPI transaction ID',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Payment Proof Upload
+                GestureDetector(
+                  onTap: () => _pickPaymentProofImage(setState),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.cloud_upload,
+                          size: 40,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _paymentProofImage != null 
+                            ? 'Payment Proof Uploaded'
+                            : 'Upload Payment Proof Screenshot',
+                          textAlign: TextAlign.center,
+                        ),
+                        if (_paymentProofImage != null)
+                          Column(
+                            children: [
+                              const SizedBox(height: 8),
+                              Image.file(
+                                _paymentProofImage!,
+                                height: 60,
+                                width: 60,
+                                fit: BoxFit.cover,
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Team Details
                 TextFormField(
                   controller: _teamNameController,
                   decoration: const InputDecoration(
@@ -651,17 +829,15 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   keyboardType: TextInputType.number,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Entry Fee: ₹${tournament['entryFee'] ?? 0}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
               ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                _paymentProofImage = null;
+                Navigator.pop(context);
+              },
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -681,19 +857,76 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  Future<void> _pickPaymentProofImage(void Function(void Function()) setState) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _paymentProofImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }
+
   Future<void> _bookTournament(Map<String, dynamic> tournament, String tournamentId) async {
     try {
+      // Check if user already booked this tournament
+      String? userId = _auth.currentUser?.uid;
+      if (userId != null) {
+        QuerySnapshot existingBookings = await _firestore
+            .collection('bookings')
+            .where('userId', isEqualTo: userId)
+            .where('tournamentId', isEqualTo: tournamentId)
+            .where('status', whereIn: ['pending', 'approved'])
+            .get();
+
+        if (existingBookings.docs.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You have already booked this tournament!')),
+          );
+          return;
+        }
+      }
+
+      // Validate required fields
       if (_teamNameController.text.isEmpty ||
           _captainNameController.text.isEmpty ||
           _phoneController.text.isEmpty ||
           _emailController.text.isEmpty ||
-          _playerCountController.text.isEmpty) {
+          _playerCountController.text.isEmpty ||
+          _transactionIdController.text.isEmpty ||
+          _paymentProofImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill all required fields')),
+          const SnackBar(content: Text('Please fill all required fields and upload payment proof')),
         );
         return;
       }
 
+      // Check if tournament still has available slots
+      DocumentSnapshot tournamentDoc = await _firestore.collection('tournaments').doc(tournamentId).get();
+      Map<String, dynamic> currentTournament = tournamentDoc.data() as Map<String, dynamic>;
+      
+      int currentParticipants = (currentTournament['currentParticipants'] as num?)?.toInt() ?? 0;
+      int maxParticipants = (currentTournament['maxParticipants'] as num?)?.toInt() ?? 0;
+      
+      if (currentParticipants >= maxParticipants) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sorry, all slots are filled!')),
+        );
+        return;
+      }
+
+      // Create booking
       await _firestore.collection('bookings').add({
         'tournamentId': tournamentId,
         'tournamentName': tournament['name'],
@@ -705,23 +938,34 @@ class _SearchPageState extends State<SearchPage> {
         'email': _emailController.text,
         'playerCount': int.tryParse(_playerCountController.text) ?? 0,
         'entryFee': tournament['entryFee'],
+        'transactionId': _transactionIdController.text,
+        'paymentProofUrl': '', // You'll need to upload the image to Firebase Storage
         'bookingDate': Timestamp.now(),
         'status': 'pending',
         'paymentStatus': 'pending',
       });
 
+      // Update participant count
       await _firestore.collection('tournaments').doc(tournamentId).update({
         'currentParticipants': FieldValue.increment(1),
       });
 
+      // Update local booking state
+      setState(() {
+        _userBookings[tournamentId] = true;
+      });
+
+      // Clear form
       _teamNameController.clear();
       _captainNameController.clear();
       _phoneController.clear();
       _playerCountController.clear();
+      _transactionIdController.clear();
+      _paymentProofImage = null;
       _emailController.text = _auth.currentUser?.email ?? '';
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking successful!')),
+        const SnackBar(content: Text('Booking successful! Waiting for approval.')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

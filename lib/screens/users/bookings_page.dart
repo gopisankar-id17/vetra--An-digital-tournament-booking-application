@@ -14,65 +14,13 @@ class _BookingsPageState extends State<BookingsPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy - hh:mm a');
-  
-  String _selectedFilter = 'all';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-
-      body: Column(
-        children: [
-          // Filter Chips
-          _buildFilterChips(),
-          // Bookings List
-          Expanded(
-            child: _buildBookingsList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.white,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildFilterChip('All', 'all'),
-            const SizedBox(width: 8),
-            _buildFilterChip('Pending', 'pending'),
-            const SizedBox(width: 8),
-            _buildFilterChip('Confirmed', 'confirmed'),
-            const SizedBox(width: 8),
-            _buildFilterChip('Cancelled', 'cancelled'),
-            const SizedBox(width: 8),
-            _buildFilterChip('Paid', 'paid'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, String value) {
-    return FilterChip(
-      label: Text(label),
-      selected: _selectedFilter == value,
-      onSelected: (selected) {
-        setState(() {
-          _selectedFilter = value;
-        });
-      },
-      backgroundColor: Colors.grey[200],
-      selectedColor: const Color(0xFF6f42c1),
-      labelStyle: TextStyle(
-        color: _selectedFilter == value ? Colors.white : Colors.black87,
-      ),
-      checkmarkColor: Colors.white,
+      
+      body: _buildBookingsList(),
     );
   }
 
@@ -96,7 +44,9 @@ class _BookingsPageState extends State<BookingsPage> {
     }
 
     return StreamBuilder<QuerySnapshot>(
-      stream: _getBookingsStream(userId),
+      stream: _firestore.collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -161,21 +111,6 @@ class _BookingsPageState extends State<BookingsPage> {
     );
   }
 
-  Stream<QuerySnapshot> _getBookingsStream(String userId) {
-    Query query = _firestore.collection('bookings')
-        .where('userId', isEqualTo: userId);
-
-    if (_selectedFilter != 'all') {
-      if (_selectedFilter == 'paid') {
-        query = query.where('paymentStatus', isEqualTo: 'paid');
-      } else {
-        query = query.where('status', isEqualTo: _selectedFilter);
-      }
-    }
-
-    return query.snapshots();
-  }
-
   Widget _buildBookingCard(Map<String, dynamic> booking, String bookingId) {
     Color statusColor = _getStatusColor(booking['status'] ?? 'pending');
     Color paymentColor = _getPaymentColor(booking['paymentStatus'] ?? 'pending');
@@ -204,13 +139,7 @@ class _BookingsPageState extends State<BookingsPage> {
                     ),
                   ),
                 ),
-                Chip(
-                  label: Text(
-                    (booking['status'] ?? 'pending').toUpperCase(),
-                    style: const TextStyle(color: Colors.white, fontSize: 10),
-                  ),
-                  backgroundColor: statusColor,
-                ),
+                
               ],
             ),
 
@@ -253,13 +182,7 @@ class _BookingsPageState extends State<BookingsPage> {
                       ),
                     ],
                   ),
-                  Chip(
-                    label: Text(
-                      (booking['paymentStatus'] ?? 'pending').toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
-                    ),
-                    backgroundColor: paymentColor,
-                  ),
+                  
                 ],
               ),
             ),
@@ -307,66 +230,63 @@ class _BookingsPageState extends State<BookingsPage> {
     String status = booking['status'] ?? 'pending';
     String paymentStatus = booking['paymentStatus'] ?? 'pending';
 
-    return Row(
-      children: [
-        if (status == 'pending' && paymentStatus == 'pending') ...[
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => _makePayment(booking, bookingId),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Pay Now'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
+    // SIMPLIFIED: Use a column instead of row to avoid overflow
+    if (status == 'pending' && paymentStatus == 'pending') {
+      return Column(
+        children: [
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
             child: OutlinedButton(
               onPressed: () => _cancelBooking(bookingId),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
               ),
-              child: const Text('Cancel'),
-            ),
-          ),
-        ] else if (status == 'confirmed') ...[
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => _viewTournamentDetails(booking),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6f42c1),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('View Tournament'),
-            ),
-          ),
-        ] else if (status == 'cancelled') ...[
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => _deleteBooking(bookingId),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.grey,
-                side: const BorderSide(color: Colors.grey),
-              ),
-              child: const Text('Remove'),
-            ),
-          ),
-        ] else if (paymentStatus == 'paid' && status == 'pending') ...[
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Awaiting Confirmation'),
+              child: const Text('Cancel Booking'),
             ),
           ),
         ],
-      ],
-    );
+      );
+    } else if (status == 'confirmed') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => _viewTournamentDetails(booking),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6f42c1),
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('View Tournament Details'),
+        ),
+      );
+    } else if (status == 'cancelled') {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: () => _deleteBooking(bookingId),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.grey,
+            side: const BorderSide(color: Colors.grey),
+          ),
+          child: const Text('Removed from List'),
+        ),
+      );
+    } else if (paymentStatus == 'paid' && status == 'pending') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Awaiting Organizer Confirmation'),
+        ),
+      );
+    }
+
+    return const SizedBox(); // Fallback
   }
 
   Color _getStatusColor(String status) {
