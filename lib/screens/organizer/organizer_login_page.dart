@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
 import '../../services/session_service.dart';
 import '../../services/organizer_service.dart';
-import '../../utils/organizer_test_helper.dart';
 import 'organizer_dashboard_screen.dart';
 import 'organizer_signup_page.dart';
 

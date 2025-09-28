@@ -5,7 +5,7 @@ import '../../models/tournament.dart';
 import '../../services/organizer_service.dart';
 import '../../services/session_service.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/session_debug_helper.dart';
+
 import '../../widgets/app_drawer.dart';
 import '../../widgets/professional_fab.dart';
 import 'organizer_add_tournament_page.dart';
@@ -94,14 +94,6 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
       appBar: AppBar(
         title: Text(_getScreenTitle()),
         actions: [
-          // Debug button
-          IconButton(
-            icon: const Icon(Icons.bug_report, color: Colors.orange),
-            onPressed: () {
-              SessionDebugHelper.showSessionDebugDialog(context);
-            },
-            tooltip: 'Debug Session',
-          ),
           // Show refresh button for Dashboard and Tournaments tabs
           if (_selectedIndex == 0 || _selectedIndex == 1)
             IconButton(

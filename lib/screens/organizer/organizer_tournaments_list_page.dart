@@ -58,60 +58,6 @@ class _OrganizerTournamentsListPageState
     );
   }
 
-  // Debug method to create a test tournament
-  Future<void> _createTestTournament() async {
-    try {
-      final organizerData = await SessionService.getOrganizerSession();
-      if (organizerData['id'] == null || organizerData['id']!.isEmpty) {
-        _showErrorSnackBar('No organizer session found');
-        return;
-      }
-
-      final testTournament = Tournament(
-        id: '',
-        name: 'Debug Test Tournament ${DateTime.now().millisecondsSinceEpoch}',
-        description: 'This is a test tournament created for debugging purposes',
-        startDate: DateTime.now().add(const Duration(days: 7)),
-        endDate: DateTime.now().add(const Duration(days: 8)),
-        registrationDeadline: DateTime.now().add(const Duration(days: 5)),
-        location: 'Debug Location',
-        organizerId: organizerData['id']!,
-        organizerName: organizerData['organization'] ?? 'Test Organizer',
-        organizer: organizerData['organization'] ?? 'Test Organizer',
-        maxParticipants: 16,
-        currentParticipants: 0,
-        entryFee: 100.0,
-        status: TournamentStatus.upcoming,
-        categories: ['Debug'],
-        format: TournamentFormat.singleElimination,
-        mode: TournamentMode.offline,
-        rules: 'Debug rules',
-        prizes: 'Debug prizes',
-        contactInfo: organizerData['email'] ?? 'test@debug.com',
-        ticketTypes: {'General': 100.0},
-        participantsCount: 0,
-        prizePool: 0.0,
-        organizerPhotoUrl: '',
-        organizerPastTournaments: 0,
-        startTime: '10:00',
-      );
-
-      final tournamentId = await OrganizerService.createTournament(
-        organizerId: organizerData['id']!,
-        tournament: testTournament,
-      );
-
-      if (tournamentId != null) {
-        _showErrorSnackBar('Test tournament created successfully!');
-        await _loadTournaments(); // Refresh the list
-      } else {
-        _showErrorSnackBar('Failed to create test tournament');
-      }
-    } catch (e) {
-      _showErrorSnackBar('Error creating test tournament: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -145,22 +91,6 @@ class _OrganizerTournamentsListPageState
           Text(
             'Create your first tournament to get started',
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-          ),
-          const SizedBox(height: 24),
-          // Debug buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _createTestTournament,
-                icon: const Icon(Icons.bug_report),
-                label: const Text('Create Test'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
           ),
         ],
       ),
