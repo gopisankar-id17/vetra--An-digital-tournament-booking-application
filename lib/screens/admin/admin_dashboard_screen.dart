@@ -192,16 +192,7 @@ bottomNavigationBar: BottomNavigationBar(
     ),
   ],
 ),
-      floatingActionButton: _selectedIndex == 0
-          ? ProfessionalFloatingActionButton(
-              onPressed: () {
-                _showCreateTournamentDialog(context);
-              },
-              tooltip: 'Create New Tournament',
-              icon: Icons.sports_esports,
-              label: 'New Tournament',
-            )
-          : null,
+      
     );
   }
 
