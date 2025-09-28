@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:vetra/screens/users/bookings_page.dart'; // Add this new import
 import 'package:vetra/screens/users/dashboard_content_page.dart';
 import 'package:vetra/screens/users/search_page.dart';
+import 'package:vetra/screens/users/tournament_videos_page.dart';
 import '../landing_page.dart';
 
 class UserDashboardPage extends StatefulWidget {
@@ -12,10 +14,8 @@ class UserDashboardPage extends StatefulWidget {
 
 class _UserDashboardPageState extends State<UserDashboardPage> {
   int _selectedIndex = 0;
-  // CORRECTED: Renamed variable to match its purpose
   String? _initialSportFilter;
 
-  // CORRECTED: Renamed method to match its purpose
   void _navigateToSearchWithSportFilter(String sport) {
     setState(() {
       _initialSportFilter = sport;
@@ -34,12 +34,12 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // --- ✅ UPDATED THIS LIST ---
     final List<Widget> pages = [
-      // CORRECTED: Parameter name changed from onCategorySelected to onSportSelected
       DashboardContentPage(onSportSelected: _navigateToSearchWithSportFilter),
-      // CORRECTED: Parameter name changed from initialFormatFilter to initialSportFilter
       SearchPage(initialSportFilter: _initialSportFilter),
-      const Center(child: Text('My Bookings - Coming Soon!', style: TextStyle(fontSize: 22))),
+      const BookingsPage(), // Replaced placeholder with the actual page
+      const TournamentVideosPage(),
       const Center(child: Text('My Profile - Coming Soon!', style: TextStyle(fontSize: 22))),
     ];
 
@@ -65,6 +65,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
         elevation: 10,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400),
+        // --- ✅ UPDATED THIS LIST ---
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
@@ -77,6 +78,10 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt),
             label: 'Bookings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.video_library),
+            label: 'Videos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -156,11 +161,20 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.video_library, color: Color(0xFF6f42c1)),
+            title: const Text('Tournament Videos'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(3);
+            },
+          ),
+          // --- ✅ UPDATED PROFILE NAVIGATION ---
+          ListTile(
             leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
             title: const Text('My Profile'),
             onTap: () {
               Navigator.pop(context);
-              _onBottomNavTap(3);
+              _onBottomNavTap(4); // Corrected index to 4
             },
           ),
           const Divider(),

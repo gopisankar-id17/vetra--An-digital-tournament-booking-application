@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:vetra/screens/users/search_page.dart';
-
+import 'package:vetra/screens/users/tournament_videos_page.dart';
 class DashboardContentPage extends StatefulWidget {
   final Function(String sport) onSportSelected;
   const DashboardContentPage({super.key, required this.onSportSelected});
