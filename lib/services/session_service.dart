@@ -149,4 +149,70 @@ class SessionService {
     if (isUser) return 'user';
     return 'none';
   }
+
+  // Profile Data Management
+  static const String _userBioKey = 'user_bio';
+  static const String _userAddressKey = 'user_address';
+  static const String _userPhotoUrlKey = 'user_photo_url';
+  static const String _userInstagramKey = 'user_instagram';
+  static const String _userTwitterKey = 'user_twitter';
+  static const String _userFacebookKey = 'user_facebook';
+  static const String _userPreferredCategoriesKey = 'user_preferred_categories';
+  static const String _userNotificationsEnabledKey = 'user_notifications_enabled';
+  static const String _userNotificationPreferencesKey = 'user_notification_preferences';
+
+  static Future<void> saveUserProfileData({
+    String? bio,
+    String? address,
+    String? photoUrl,
+    String? instagram,
+    String? twitter,
+    String? facebook,
+    List<String>? preferredCategories,
+    bool? notificationsEnabled,
+    List<String>? notificationPreferences,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    if (bio != null) await prefs.setString(_userBioKey, bio);
+    if (address != null) await prefs.setString(_userAddressKey, address);
+    if (photoUrl != null) await prefs.setString(_userPhotoUrlKey, photoUrl);
+    if (instagram != null) await prefs.setString(_userInstagramKey, instagram);
+    if (twitter != null) await prefs.setString(_userTwitterKey, twitter);
+    if (facebook != null) await prefs.setString(_userFacebookKey, facebook);
+    if (preferredCategories != null) await prefs.setString(_userPreferredCategoriesKey, preferredCategories.join(','));
+    if (notificationsEnabled != null) await prefs.setBool(_userNotificationsEnabledKey, notificationsEnabled);
+    if (notificationPreferences != null) await prefs.setString(_userNotificationPreferencesKey, notificationPreferences.join(','));
+    
+    print('SessionService: User profile data saved');
+  }
+
+  static Future<Map<String, String?>> getUserProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'bio': prefs.getString(_userBioKey),
+      'address': prefs.getString(_userAddressKey),
+      'photoUrl': prefs.getString(_userPhotoUrlKey),
+      'instagram': prefs.getString(_userInstagramKey),
+      'twitter': prefs.getString(_userTwitterKey),
+      'facebook': prefs.getString(_userFacebookKey),
+      'preferredCategories': prefs.getString(_userPreferredCategoriesKey),
+      'notificationsEnabled': prefs.getBool(_userNotificationsEnabledKey)?.toString(),
+      'notificationPreferences': prefs.getString(_userNotificationPreferencesKey),
+    };
+  }
+
+  static Future<void> clearUserProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userBioKey);
+    await prefs.remove(_userAddressKey);
+    await prefs.remove(_userPhotoUrlKey);
+    await prefs.remove(_userInstagramKey);
+    await prefs.remove(_userTwitterKey);
+    await prefs.remove(_userFacebookKey);
+    await prefs.remove(_userPreferredCategoriesKey);
+    await prefs.remove(_userNotificationsEnabledKey);
+    await prefs.remove(_userNotificationPreferencesKey);
+    print('SessionService: User profile data cleared');
+  }
 }

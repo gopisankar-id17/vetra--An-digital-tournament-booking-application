@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../utils/app_theme.dart';
+import '../../services/session_service.dart';
 import 'dart:math' as math;
 import 'dart:async';
 
@@ -94,38 +95,64 @@ class _ProfileCustomizationScreenState extends State<ProfileCustomizationScreen>
   @override
   void initState() {
     super.initState();
+    _initializeWithSessionData();
+  }
 
-    // Initialize controllers with user data
-    _nameController = TextEditingController(text: widget.user.name);
+  Future<void> _initializeWithSessionData() async {
+    final userData = await SessionService.getUserSession();
+    final profileData = await SessionService.getUserProfileData(); // We'll add this
+
+    // Initialize controllers with session data if available, otherwise use defaults
+    _nameController = TextEditingController(text: userData['name'] ?? widget.user.name);
     _bioController = TextEditingController(
-      text: widget.user.bio ?? 'No bio yet...',
+      text: profileData['bio'] ?? widget.user.bio ?? 'Tell others about yourself...',
     );
-    _locationController = TextEditingController(text: widget.user.address);
-    _phoneController = TextEditingController(text: widget.user.phone);
+    _locationController = TextEditingController(text: profileData['address'] ?? widget.user.address ?? '');
+    _phoneController = TextEditingController(text: userData['phone'] ?? widget.user.phone ?? '');
 
     // Initialize social media controllers
-    _instagramController = TextEditingController(text: '');
-    _twitterController = TextEditingController(text: '');
-    _facebookController = TextEditingController(text: '');
+    _instagramController = TextEditingController(text: profileData['instagram'] ?? '');
+    _twitterController = TextEditingController(text: profileData['twitter'] ?? '');
+    _facebookController = TextEditingController(text: profileData['facebook'] ?? '');
 
     // Initialize user preferences
-    _selectedPreferredCategories =
-        widget.user.preferredCategories ?? ['Chess', 'Board Games'];
-    _notificationsEnabled = true;
-    _notificationPreferences = [
-      'Tournament updates',
-      'Booking confirmations',
-      'Results',
-    ];
+    List<String> preferredCats = [];
+    String? catsString = profileData['preferredCategories'];
+    if (catsString?.isNotEmpty == true) {
+      preferredCats = catsString!.split(',');
+    } else {
+      preferredCats = widget.user.preferredCategories ?? ['Chess', 'Board Games'];
+    }
+    _selectedPreferredCategories = preferredCats;
+
+    _notificationsEnabled = profileData['notificationsEnabled'] == 'true';
+    
+    List<String> notifPrefs = [];
+    String? notifsString = profileData['notificationPreferences'];
+    if (notifsString?.isNotEmpty == true) {
+      notifPrefs = notifsString!.split(',');
+    } else {
+      notifPrefs = [
+        'Tournament updates',
+        'Booking confirmations',
+        'Results',
+      ];
+    }
+    _notificationPreferences = notifPrefs;
 
     // Set initial avatar
-    _selectedAvatarUrl = widget.user.photoUrl;
+    _selectedAvatarUrl = profileData['photoUrl'] ?? widget.user.photoUrl;
 
     // Initialize animation controller for avatar selection
     _avatarAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+
+    // Trigger a rebuild to show the loaded data
+    if (mounted) {
+      setState(() {});
+    }
 
     // Listen to changes
     _nameController.addListener(_onFieldChanged);
@@ -220,6 +247,36 @@ class _ProfileCustomizationScreenState extends State<ProfileCustomizationScreen>
             const SizedBox(height: 16),
             _buildPrivacySection(),
             const SizedBox(height: 32),
+
+            // Save Changes Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _hasChanges ? _handleSave : null,
+                icon: _isSaving 
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.save),
+                label: _isSaving 
+                    ? const Text('Saving...') 
+                    : const Text('Save Changes'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Preview profile button
             SizedBox(
@@ -989,33 +1046,6 @@ class _ProfileCustomizationScreenState extends State<ProfileCustomizationScreen>
             );
           }).toList(),
         ),
-
-        // Team information
-        const SizedBox(height: 24),
-        const Text(
-          'Team Information',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 12),
-
-        OutlinedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Team management feature coming soon'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
-          icon: const Icon(Icons.group_add),
-          label: const Text('Connect with a team'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -1166,7 +1196,7 @@ class _ProfileCustomizationScreenState extends State<ProfileCustomizationScreen>
     return result ?? false;
   }
 
-  void _handleSave() {
+  void _handleSave() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -1175,8 +1205,20 @@ class _ProfileCustomizationScreenState extends State<ProfileCustomizationScreen>
       _isSaving = true;
     });
 
-    // Simulate saving
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      // Save all profile data to SessionService
+      await SessionService.saveUserProfileData(
+        bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
+        address: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+        photoUrl: _selectedAvatarUrl,
+        instagram: _instagramController.text.trim().isEmpty ? null : _instagramController.text.trim(),
+        twitter: _twitterController.text.trim().isEmpty ? null : _twitterController.text.trim(),
+        facebook: _facebookController.text.trim().isEmpty ? null : _facebookController.text.trim(),
+        preferredCategories: _selectedPreferredCategories,
+        notificationsEnabled: _notificationsEnabled,
+        notificationPreferences: _notificationPreferences,
+      );
+
       if (mounted) {
         setState(() {
           _isSaving = false;
@@ -1193,6 +1235,20 @@ class _ProfileCustomizationScreenState extends State<ProfileCustomizationScreen>
         // Optionally navigate back
         // Navigator.pop(context);
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving profile: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

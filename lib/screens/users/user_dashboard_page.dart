@@ -55,12 +55,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
       SearchPage(initialSportFilter: _initialSportFilter),
       const BookingsPage(), // Replaced placeholder with the actual page
       const TournamentVideosPage(),
-      const Center(
-        child: Text(
-          'My Profile - Coming Soon!',
-          style: TextStyle(fontSize: 22),
-        ),
-      ),
+      const AboutUsPage(), // Replaced "Coming Soon" with About Us page
     ];
 
     return Scaffold(
@@ -74,8 +69,13 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
-                // Navigate to profile page when icon is tapped
-                _onBottomNavTap(4);
+                // Navigate to dedicated profile page when avatar is tapped
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserProfileScreen(),
+                  ),
+                );
               },
               child: const CircleAvatar(
                 backgroundColor: Colors.white,
@@ -112,7 +112,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             icon: Icon(Icons.video_library),
             label: 'Videos',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About Us'),
         ],
       ),
     );
@@ -204,24 +204,13 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               _onBottomNavTap(3);
             },
           ),
-          // --- ✅ UPDATED PROFILE NAVIGATION ---
-          ListTile(
-            leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
-            title: const Text('My Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              _onBottomNavTap(4); // Corrected index to 4
-            },
-          ),
+          // --- ✅ UPDATED TO ABOUT US ---
           ListTile(
             leading: const Icon(Icons.info, color: Color(0xFF6f42c1)),
             title: const Text('About Us'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutUsPage()),
-              );
+              _onBottomNavTap(4); // Navigate to About Us tab (index 4)
             },
           ),
           const Divider(),

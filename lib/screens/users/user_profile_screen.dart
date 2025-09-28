@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../common/profile_customization_screen.dart';
 import '../common/about_us_page.dart';
 import '../../models/user.dart';
+import '../../services/session_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -103,7 +104,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       // Custom App Bar
                       Row(
                         children: [
-                          const SizedBox(width: 56), // Space to center the title
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
                           const Expanded(
                             child: Center(
                               child: Text(
@@ -131,61 +137,92 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      // Profile Avatar
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              spreadRadius: 5,
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundColor: const Color(0xFF7CB342),
-                          child: const Text(
-                            'JD',
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // User Name
-                      const Text(
-                        'John Doe',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Location
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            color: Colors.white70,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            '456 User Avenue, Town',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
+                      // Profile Avatar and User Info - Dynamic from Session
+                      FutureBuilder<Map<String, String?>>(
+                        future: SessionService.getUserSession(),
+                        builder: (context, snapshot) {
+                          String userName = 'User';
+                          String userInitials = 'U';
+                          String phoneNumber = '';
+                          
+                          if (snapshot.hasData && snapshot.data != null) {
+                            final sessionData = snapshot.data!;
+                            userName = sessionData['name'] ?? 'User';
+                            phoneNumber = sessionData['phone'] ?? '';
+                            
+                            // Generate initials from name
+                            if (userName != 'User' && userName.isNotEmpty) {
+                              List<String> nameParts = userName.split(' ');
+                              if (nameParts.length >= 2) {
+                                userInitials = '${nameParts[0][0]}${nameParts[1][0]}';
+                              } else {
+                                userInitials = userName.length >= 2 ? userName.substring(0, 2) : userName[0];
+                              }
+                              userInitials = userInitials.toUpperCase();
+                            }
+                          }
+                          
+                          return Column(
+                            children: [
+                              // Profile Avatar
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      spreadRadius: 5,
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 60,
+                                  backgroundColor: const Color(0xFF7CB342),
+                                  child: Text(
+                                    userInitials,
+                                    style: const TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              // User Name
+                              Text(
+                                userName,
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // Phone Number
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.phone,
+                                    color: Colors.white70,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    phoneNumber.isNotEmpty ? phoneNumber : 'No phone number',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
