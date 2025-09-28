@@ -259,7 +259,7 @@ class _SearchPageState extends State<SearchPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Max Entry Fee: ₹${_maxEntryFee.toInt()}'),
+                Text('Max Entry Fee: ₹${_maxEntryFee.toInt()}'), // Changed $ to ₹
                 Slider(
                   value: _maxEntryFee,
                   min: 0,
@@ -444,143 +444,151 @@ String _formatDisplayText(String text) {
       return true;
     }).toList();
   }
+Widget _buildTournamentCard(Map<String, dynamic> tournament, String tournamentId) {
+  Timestamp startDate = tournament['startDate'] as Timestamp;
+  Timestamp endDate = tournament['endDate'] as Timestamp;
+  
+  int currentParticipants = (tournament['currentParticipants'] as num?)?.toInt() ?? 0;
+  int maxParticipants = (tournament['maxParticipants'] as num?)?.toInt() ?? 0;
+  bool isFull = currentParticipants >= maxParticipants;
+  bool isBookedByUser = _userBookings[tournamentId] ?? false;
 
-  Widget _buildTournamentCard(Map<String, dynamic> tournament, String tournamentId) {
-    Timestamp startDate = tournament['startDate'] as Timestamp;
-    Timestamp endDate = tournament['endDate'] as Timestamp;
-    
-    int currentParticipants = (tournament['currentParticipants'] as num?)?.toInt() ?? 0;
-    int maxParticipants = (tournament['maxParticipants'] as num?)?.toInt() ?? 0;
-    bool isFull = currentParticipants >= maxParticipants;
-    bool isBookedByUser = _userBookings[tournamentId] ?? false;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (tournament['imageUrl'] != null)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Image.network(
-                tournament['imageUrl'],
+  return Card(
+    margin: const EdgeInsets.only(bottom: 16),
+    elevation: 2,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (tournament['imageUrl'] != null)
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              tournament['imageUrl'],
+              height: 150,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
                 height: 150,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 150,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.sports_esports, size: 50, color: Colors.grey),
-                ),
+                color: Colors.grey[200],
+                child: const Icon(Icons.sports_esports, size: 50, color: Colors.grey),
               ),
             ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        tournament['name'] ?? 'Unnamed Tournament',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      children: [
-                        Chip(
-                          label: Text(
-                            _getStatusText(tournament['status'] ?? ''),
-                            style: const TextStyle(color: Colors.white, fontSize: 10),
-                          ),
-                          backgroundColor: _getStatusColor(tournament['status'] ?? ''),
-                        ),
-                        if (isBookedByUser)
-                          Chip(
-                            label: const Text(
-                              'BOOKED',
-                              style: TextStyle(color: Colors.white, fontSize: 8),
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                _buildDetailRow(Icons.calendar_today, 
-                  '${DateFormat.yMMMd().format(startDate.toDate())} - ${DateFormat.yMMMd().format(endDate.toDate())}'),
-                _buildDetailRow(Icons.location_on, tournament['location'] ?? 'Location not specified'),
-                _buildDetailRow(Icons.people, 
-                  '$currentParticipants/$maxParticipants participants ${isFull ? ' (FULL)' : ''}'),
-                _buildDetailRow(Icons.attach_money, 'Entry Fee: \$${tournament['entryFee'] ?? 0}'),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Chip(
-                      label: Text(tournament['organizer'] ?? 'Unknown'),
-                      backgroundColor: Colors.blue[50],
-                    ),
-                    const SizedBox(width: 8),
-                    Chip(
-                      label: Text(_formatTournamentFormat(tournament['format'] ?? '')),
-                      backgroundColor: Colors.green[50],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          _showTournamentDetails(tournament, tournamentId);
-                        },
-                        icon: const Icon(Icons.info_outline),
-                        label: const Text('Details'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: isFull || isBookedByUser ? null : () {
-                          _showBookingDialog(tournament, tournamentId);
-                        },
-                        icon: Icon(isBookedByUser ? Icons.check_circle : Icons.book_online),
-                        label: Text(
-                          isBookedByUser ? 'Booked' : 
-                          isFull ? 'FULL' : 'Book Now'
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isBookedByUser ? Colors.green : 
-                                         isFull ? Colors.grey : const Color(0xFF6f42c1),
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
-        ],
-      ),
-    );
-  }
+
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      tournament['name'] ?? 'Unnamed Tournament',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      Chip(
+                        label: Text(
+                          _getStatusText(tournament['status'] ?? ''),
+                          style: const TextStyle(color: Colors.white, fontSize: 10),
+                        ),
+                        backgroundColor: _getStatusColor(tournament['status'] ?? ''),
+                      ),
+                      if (isBookedByUser)
+                        Chip(
+                          label: const Text(
+                            'BOOKED',
+                            style: TextStyle(color: Colors.white, fontSize: 8),
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              _buildDetailRow(Icons.calendar_today, 
+                '${DateFormat.yMMMd().format(startDate.toDate())} - ${DateFormat.yMMMd().format(endDate.toDate())}'),
+              _buildDetailRow(Icons.location_on, tournament['location'] ?? 'Location not specified'),
+              _buildDetailRow(Icons.people, 
+                '$currentParticipants/$maxParticipants participants ${isFull ? ' (FULL)' : ''}'),
+              _buildDetailRow(Icons.attach_money, 'Entry Fee: ₹${tournament['entryFee'] ?? 0}'),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Chip(
+                    label: Text(tournament['organizer'] ?? 'Unknown'),
+                    backgroundColor: Colors.blue[50],
+                  ),
+                  const SizedBox(width: 8),
+                  Chip(
+                    label: Text(_formatTournamentFormat(tournament['format'] ?? '')),
+                    backgroundColor: Colors.green[50],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _showTournamentDetails(tournament, tournamentId);
+                      },
+                      icon: const Icon(Icons.info_outline, size: 20),
+                      label: const Text('Details'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48), // Set consistent height
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        textStyle: const TextStyle(fontSize: 14),
+                        side: const BorderSide(color: Color(0xFF6f42c1)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: isFull || isBookedByUser ? null : () {
+                        _showBookingDialog(tournament, tournamentId);
+                      },
+                      icon: Icon(isBookedByUser ? Icons.check_circle : Icons.book_online, size: 20),
+                      label: Text(
+                        isBookedByUser ? 'Booked' : 
+                        isFull ? 'FULL' : 'Book Now'
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48), // Set consistent height
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        textStyle: const TextStyle(fontSize: 14),
+                        backgroundColor: isBookedByUser ? Colors.green : 
+                                       isFull ? Colors.grey : const Color(0xFF6f42c1),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildDetailRow(IconData icon, String text) {
     return Padding(
@@ -726,9 +734,9 @@ String _formatDisplayText(String text) {
                       ),
                       const SizedBox(height: 10),
                       Text(
-  'Amount: \$${tournament['entryFee'] ?? 0}',
-  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-),
+                        'Amount: ₹${tournament['entryFee'] ?? 0}', // Changed $ to ₹
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 ),
