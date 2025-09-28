@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vetra/screens/users/bookings_page.dart'; // Add this new import
+import 'package:vetra/screens/users/bookings_page.dart';
 import 'package:vetra/screens/users/dashboard_content_page.dart';
 import 'package:vetra/screens/users/search_page.dart';
 import 'package:vetra/screens/users/tournament_videos_page.dart';
@@ -24,7 +24,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   void _navigateToSearchWithSportFilter(String sport) {
     setState(() {
       _initialSportFilter = sport;
+
       _initialStatusFilter = null;
+
       _selectedIndex = 1; // Index of the Search Page
     });
   }
@@ -49,13 +51,14 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // --- ✅ UPDATED THIS LIST ---
     final List<Widget> pages = [
       DashboardContentPage(onSportSelected: _navigateToSearchWithSportFilter),
       SearchPage(initialSportFilter: _initialSportFilter),
-      const BookingsPage(), // Replaced placeholder with the actual page
+      const BookingsPage(),
       const TournamentVideosPage(),
+
       const AboutUsPage(), // Replaced "Coming Soon" with About Us page
+
     ];
 
     return Scaffold(
@@ -69,6 +72,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
+
                 // Navigate to dedicated profile page when avatar is tapped
                 Navigator.push(
                   context,
@@ -76,6 +80,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                     builder: (context) => const UserProfileScreen(),
                   ),
                 );
+
               },
               child: const CircleAvatar(
                 backgroundColor: Colors.white,
@@ -112,7 +117,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             icon: Icon(Icons.video_library),
             label: 'Videos',
           ),
+
           BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About Us'),
+
         ],
       ),
     );
@@ -204,13 +211,15 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               _onBottomNavTap(3);
             },
           ),
-          // --- ✅ UPDATED TO ABOUT US ---
+
           ListTile(
             leading: const Icon(Icons.info, color: Color(0xFF6f42c1)),
             title: const Text('About Us'),
             onTap: () {
               Navigator.pop(context);
+
               _onBottomNavTap(4); // Navigate to About Us tab (index 4)
+
             },
           ),
           const Divider(),
