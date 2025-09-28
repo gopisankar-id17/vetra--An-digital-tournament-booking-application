@@ -85,20 +85,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sports.jpg'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black54, // Dark overlay for text readability
-              BlendMode.darken,
-            ),
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: Colors.white, // Changed to white background
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -126,15 +114,15 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   'Admin Login',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black, // Changed to black for better contrast
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Sign in to access admin panel',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[700], // Changed to grey for better readability
+                  ),
                 ),
                 const SizedBox(height: 32),
 
@@ -272,7 +260,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
               ],
             ),
           ),
-        ),
         ),
       ),
     );

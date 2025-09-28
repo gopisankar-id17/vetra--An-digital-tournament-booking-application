@@ -274,46 +274,26 @@ class _OrganizerLoginPageState extends State<OrganizerLoginPage> {
                   ],
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
-                // Features List
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Organizer Features:',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildFeatureItem(
-                        Icons.add_circle,
-                        'Create new tournaments',
-                      ),
-                      _buildFeatureItem(
-                        Icons.manage_accounts,
-                        'Manage participants',
-                      ),
-                      _buildFeatureItem(
-                        Icons.analytics,
-                        'View tournament analytics',
-                      ),
-                      _buildFeatureItem(
-                        Icons.payment,
-                        'Handle payments & prizes',
-                      ),
-                    ],
+                // Back to Home Button
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Back to Home',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+
+                const SizedBox(height: 20),
+
+                // Features List
+                
               ],
             ),
           ),
