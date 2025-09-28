@@ -57,7 +57,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
       const BookingsPage(),
       const TournamentVideosPage(),
 
-      const UserProfileScreen(), // Use actual profile screen instead of placeholder
+      const AboutUsPage(), // Replaced "Coming Soon" with About Us page
 
     ];
 
@@ -73,7 +73,13 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             child: GestureDetector(
               onTap: () {
 
-                _onBottomNavTap(4); // Navigate to profile page (index 4)
+                // Navigate to dedicated profile page when avatar is tapped
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserProfileScreen(),
+                  ),
+                );
 
               },
               child: const CircleAvatar(
@@ -112,10 +118,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             label: 'Videos',
           ),
 
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About Us'),
 
         ],
       ),
@@ -208,24 +211,15 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               _onBottomNavTap(3);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
-            title: const Text('My Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              _onBottomNavTap(4);
-            },
-          ),
+
           ListTile(
             leading: const Icon(Icons.info, color: Color(0xFF6f42c1)),
             title: const Text('About Us'),
             onTap: () {
               Navigator.pop(context);
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutUsPage()),
-              );
+              _onBottomNavTap(4); // Navigate to About Us tab (index 4)
+
             },
           ),
           const Divider(),
