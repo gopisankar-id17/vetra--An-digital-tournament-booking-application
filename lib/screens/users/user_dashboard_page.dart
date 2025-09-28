@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:vetra/screens/users/dashboard_content_page.dart';
 import 'package:vetra/screens/users/search_page.dart';
+import 'package:vetra/screens/users/user_profile_screen.dart';
+import 'package:vetra/screens/users/my_bookings_page.dart';
+import 'package:vetra/screens/common/about_us_page.dart';
+import 'package:vetra/services/session_service.dart';
 import '../landing_page.dart';
 
 class UserDashboardPage extends StatefulWidget {
@@ -14,11 +18,13 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   int _selectedIndex = 0;
   // CORRECTED: Renamed variable to match its purpose
   String? _initialSportFilter;
+  String? _initialStatusFilter;
 
   // CORRECTED: Renamed method to match its purpose
-  void _navigateToSearchWithSportFilter(String sport) {
+  void _navigateToSearchWithFilters({String? sport, String? status}) {
     setState(() {
       _initialSportFilter = sport;
+      _initialStatusFilter = status;
       _selectedIndex = 1; // Index of the Search Page
     });
   }
@@ -27,6 +33,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     setState(() {
       if (_selectedIndex == 1 || index != 1) {
         _initialSportFilter = null;
+        _initialStatusFilter = null;
       }
       _selectedIndex = index;
     });
@@ -36,11 +43,18 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       // CORRECTED: Parameter name changed from onCategorySelected to onSportSelected
-      DashboardContentPage(onSportSelected: _navigateToSearchWithSportFilter),
+      DashboardContentPage(
+        onSportSelected: (sport) => _navigateToSearchWithFilters(sport: sport),
+        onNavigateToSearch: _navigateToSearchWithFilters,
+      ),
       // CORRECTED: Parameter name changed from initialFormatFilter to initialSportFilter
-      SearchPage(initialSportFilter: _initialSportFilter),
-      const Center(child: Text('My Bookings - Coming Soon!', style: TextStyle(fontSize: 22))),
-      const Center(child: Text('My Profile - Coming Soon!', style: TextStyle(fontSize: 22))),
+      SearchPage(
+        initialSportFilter: _initialSportFilter,
+        initialStatusFilter: _initialStatusFilter,
+      ),
+      const MyBookingsPage(), // New bookings page with sample data
+      const UserProfileScreen(),
+      const AboutUsPage(), // Added About Us page as 5th tab
     ];
 
     return Scaffold(
@@ -82,6 +96,10 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             icon: Icon(Icons.person),
             label: 'Profile',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info),
+            label: 'About Us',
+          ),
         ],
       ),
     );
@@ -92,44 +110,56 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF6f42c1), Color(0xFF8a63d2)],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 35,
-                    color: Color(0xFF6f42c1),
+          FutureBuilder<Map<String, String?>>(
+            future: SessionService.getUserSession(),
+            builder: (context, snapshot) {
+              String displayName = 'User';
+              if (snapshot.hasData && snapshot.data != null) {
+                displayName = snapshot.data!['name'] ?? 
+                            snapshot.data!['phone']?.replaceAll('+91', '') ?? 
+                            'User';
+              }
+              
+              return DrawerHeader(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF6f42c1), Color(0xFF8a63d2)],
                   ),
                 ),
-                SizedBox(height: 10),
-                Text(
-                  'User Panel',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 35,
+                        color: Color(0xFF6f42c1),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Tournament Participant',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  'Tournament Participant',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.dashboard, color: Color(0xFF6f42c1)),
@@ -161,6 +191,14 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             onTap: () {
               Navigator.pop(context);
               _onBottomNavTap(3);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info, color: Color(0xFF6f42c1)),
+            title: const Text('About Us'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(4); // Navigate to About Us tab (index 4)
             },
           ),
           const Divider(),
