@@ -24,6 +24,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   void _navigateToSearchWithSportFilter(String sport) {
     setState(() {
       _initialSportFilter = sport;
+
+      _initialStatusFilter = null;
+
       _selectedIndex = 1; // Index of the Search Page
     });
   }
@@ -53,7 +56,9 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
       SearchPage(initialSportFilter: _initialSportFilter),
       const BookingsPage(),
       const TournamentVideosPage(),
+
       const UserProfileScreen(), // Use actual profile screen instead of placeholder
+
     ];
 
     return Scaffold(
@@ -67,26 +72,21 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
+
                 _onBottomNavTap(4); // Navigate to profile page (index 4)
+
               },
               child: const CircleAvatar(
                 backgroundColor: Colors.white,
                 radius: 18,
-                child: Icon(
-                  Icons.person,
-                  size: 24,
-                  color: Color(0xFF6f42c1),
-                ),
+                child: Icon(Icons.person, size: 24, color: Color(0xFF6f42c1)),
               ),
             ),
           ),
         ],
       ),
       drawer: _buildDrawer(),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -102,10 +102,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt),
             label: 'Bookings',
@@ -114,10 +111,12 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             icon: Icon(Icons.video_library),
             label: 'Videos',
           ),
+
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
           ),
+
         ],
       ),
     );
@@ -133,11 +132,12 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             builder: (context, snapshot) {
               String displayName = 'User';
               if (snapshot.hasData && snapshot.data != null) {
-                displayName = snapshot.data!['name'] ?? 
-                            snapshot.data!['phone']?.replaceAll('+91', '') ?? 
-                            'User';
+                displayName =
+                    snapshot.data!['name'] ??
+                    snapshot.data!['phone']?.replaceAll('+91', '') ??
+                    'User';
               }
-              
+
               return DrawerHeader(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -169,10 +169,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                     ),
                     const Text(
                       'Tournament Participant',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -224,7 +221,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             title: const Text('About Us'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to About Us page directly (not in bottom nav)
+
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AboutUsPage()),
