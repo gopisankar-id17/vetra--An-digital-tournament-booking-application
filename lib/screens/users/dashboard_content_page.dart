@@ -9,7 +9,12 @@ import 'package:vetra/screens/users/search_page.dart';
 import 'package:vetra/screens/users/tournament_videos_page.dart';
 class DashboardContentPage extends StatefulWidget {
   final Function(String sport) onSportSelected;
-  const DashboardContentPage({super.key, required this.onSportSelected});
+  final Function({String? sport, String? status})? onNavigateToSearch;
+  const DashboardContentPage({
+    super.key, 
+    required this.onSportSelected,
+    this.onNavigateToSearch,
+  });
 
   @override
   State<DashboardContentPage> createState() => _DashboardContentPageState();
@@ -23,6 +28,9 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
   int _upcomingCurrentIndex = 0;
   int _ongoingCurrentIndex = 0;
   int _trendingCurrentIndex = 0;
+  
+  // Track expanded tournament cards
+  Set<String> _expandedCards = <String>{};
 
   // State for the Calendar
   late final ValueNotifier<List<Map<String, dynamic>>> _selectedEvents;
@@ -208,12 +216,14 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
                     // --- CAROUSELS SECTION ---
                     if (_upcomingTournaments.isNotEmpty) ...[
                       _buildSectionHeader(
-                          context, 'Upcoming Tournaments 🗓️', () {}),
+                          context, 'Upcoming Tournaments 🗓️', () {
+                        _navigateToSearch(context, status: 'upcoming');
+                      }),
                       const SizedBox(height: 15),
                       carousel.CarouselSlider(
                         carouselController: _upcomingCarouselController,
                         options: carousel.CarouselOptions(
-                          height: 160.0,
+                          height: 220.0,
                           autoPlay: true,
                           enlargeCenterPage: true,
                           viewportFraction: 0.8,
@@ -235,12 +245,14 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
                     ],
                     if (_ongoingTournaments.isNotEmpty) ...[
                       _buildSectionHeader(
-                          context, 'Ongoing Tournaments 🥇', () {}),
+                          context, 'Ongoing Tournaments 🥇', () {
+                        _navigateToSearch(context, status: 'ongoing');
+                      }),
                       const SizedBox(height: 15),
                       carousel.CarouselSlider(
                         carouselController: _ongoingCarouselController,
                         options: carousel.CarouselOptions(
-                          height: 160.0,
+                          height: 220.0,
                           autoPlay: true,
                           enlargeCenterPage: true,
                           viewportFraction: 0.8,
@@ -261,12 +273,14 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
                       const SizedBox(height: 30),
                     ],
                     if (_trendingTournaments.isNotEmpty) ...[
-                      _buildSectionHeader(context, 'Trending Now 🔥', () {}),
+                      _buildSectionHeader(context, 'Trending Now 🔥', () {
+                        _navigateToSearch(context);
+                      }),
                       const SizedBox(height: 15),
                       carousel.CarouselSlider(
                         carouselController: _trendingCarouselController,
                         options: carousel.CarouselOptions(
-                          height: 160.0,
+                          height: 220.0,
                           autoPlay: true,
                           enlargeCenterPage: true,
                           viewportFraction: 0.8,
@@ -288,7 +302,9 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
                     ],
 
                     // --- CALENDAR SECTION ---
-                     _buildSectionHeader(context, 'Tournament Calendar 📅', () {}),
+                     _buildSectionHeader(context, 'Tournament Calendar 📅', () {
+                       _navigateToSearch(context);
+                     }),
                     const SizedBox(height: 15),
                     _buildTournamentCalendar(),
                     const SizedBox(height: 20),
@@ -413,6 +429,24 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
     );
   }
 
+  // Navigate to search page with filters
+  void _navigateToSearch(BuildContext context, {String? status, String? sport}) {
+    // Try to use the callback to navigate within the tab structure
+    if (widget.onNavigateToSearch != null) {
+      widget.onNavigateToSearch!(sport: sport, status: status);
+    } else {
+      // Fallback to the old push navigation
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SearchPage(
+            initialSportFilter: sport,
+            initialStatusFilter: status,
+          ),
+        ),
+      );
+    }
+  }
 
   void _showComingSoonSnackbar(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -474,6 +508,7 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
       BuildContext context, Map<String, dynamic> tournament) {
     String title = tournament['name'] ?? 'Unknown Tournament';
     String imageUrl = tournament['imageUrl'] ?? '';
+    String tournamentId = tournament['id'] ?? '';
     int currentParticipants = tournament['currentParticipants'] ?? 0;
     int maxParticipants = tournament['maxParticipants'] ?? 1;
     double participationRate =
@@ -493,8 +528,18 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
       tagColor = const Color(0xFF6f42c1);
     }
 
+    bool isExpanded = _expandedCards.contains(tournamentId);
+
     return GestureDetector(
-      onTap: () => _showTournamentDetails(context, tournament),
+      onTap: () {
+        setState(() {
+          if (isExpanded) {
+            _expandedCards.remove(tournamentId);
+          } else {
+            _expandedCards.add(tournamentId);
+          }
+        });
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 5.0),
         child: ClipRRect(
@@ -542,6 +587,50 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
                       style:
                           const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
+                    
+                    // Show buttons when expanded
+                    if (isExpanded) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.visibility, size: 14),
+                              label: const Text('View', style: TextStyle(fontSize: 12)),
+                              onPressed: () {
+                                _showFullTournamentDetails(context, tournament);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[600],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.how_to_reg, size: 14),
+                              label: const Text('Register', style: TextStyle(fontSize: 12)),
+                              onPressed: () {
+                                _showBookingDialog(tournament, tournamentId);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6f42c1),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -570,11 +659,22 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
       BuildContext context, Map<String, dynamic> tournament) {
     String title = tournament['name'] ?? 'Unknown Tournament';
     String imageUrl = tournament['imageUrl'] ?? '';
+    String tournamentId = tournament['id'] ?? '';
     Timestamp startDate = tournament['startDate'] as Timestamp;
     String date = _dateFormat.format(startDate.toDate());
+    
+    bool isExpanded = _expandedCards.contains(tournamentId);
 
     return GestureDetector(
-      onTap: () => _showTournamentDetails(context, tournament),
+      onTap: () {
+        setState(() {
+          if (isExpanded) {
+            _expandedCards.remove(tournamentId);
+          } else {
+            _expandedCards.add(tournamentId);
+          }
+        });
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 5.0),
         child: ClipRRect(
@@ -617,18 +717,69 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
               Positioned(
                 bottom: 10,
                 left: 10,
-                child: Row(
+                right: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.calendar_today,
-                        size: 12, color: Colors.white70),
-                    const SizedBox(width: 4),
-                    Text(
-                      date,
-                      style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today,
+                            size: 12, color: Colors.white70),
+                        const SizedBox(width: 4),
+                        Text(
+                          date,
+                          style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
                     ),
+                    
+                    // Show buttons when expanded
+                    if (isExpanded) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.visibility, size: 14),
+                              label: const Text('View', style: TextStyle(fontSize: 12)),
+                              onPressed: () {
+                                _showFullTournamentDetails(context, tournament);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[600],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.how_to_reg, size: 14),
+                              label: const Text('Register', style: TextStyle(fontSize: 12)),
+                              onPressed: () {
+                                _showBookingDialog(tournament, tournamentId);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6f42c1),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -657,9 +808,20 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
       BuildContext context, Map<String, dynamic> tournament) {
     String title = tournament['name'] ?? 'Unknown Tournament';
     String imageUrl = tournament['imageUrl'] ?? '';
+    String tournamentId = tournament['id'] ?? '';
+    
+    bool isExpanded = _expandedCards.contains(tournamentId);
 
     return GestureDetector(
-      onTap: () => _showTournamentDetails(context, tournament),
+      onTap: () {
+        setState(() {
+          if (isExpanded) {
+            _expandedCards.remove(tournamentId);
+          } else {
+            _expandedCards.add(tournamentId);
+          }
+        });
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 5.0),
         child: ClipRRect(
@@ -689,14 +851,64 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
                 bottom: 10,
                 left: 10,
                 right: 10,
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    // Show buttons when expanded
+                    if (isExpanded) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.visibility, size: 14),
+                              label: const Text('View', style: TextStyle(fontSize: 12)),
+                              onPressed: () {
+                                _showFullTournamentDetails(context, tournament);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[600],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.how_to_reg, size: 14),
+                              label: const Text('Register', style: TextStyle(fontSize: 12)),
+                              onPressed: () {
+                                _showBookingDialog(tournament, tournamentId);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6f42c1),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const Positioned(
@@ -856,6 +1068,132 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
   void _showTournamentDetails(
       BuildContext context, Map<String, dynamic> tournament) {
     String title = tournament['name'] ?? 'Unknown Tournament';
+    
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              // Tournament title
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C3E50),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 30),
+              
+              // Two buttons
+              Row(
+                children: [
+                  // View Button
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.visibility),
+                      label: const Text('View Details'),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showFullTournamentDetails(context, tournament);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 15),
+                  
+                  // Register Button
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.how_to_reg),
+                      label: const Text('Register'),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showBookingDialog(tournament, tournament['id']);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6f42c1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFullTournamentDetails(
+      BuildContext context, Map<String, dynamic> tournament) {
+    print('DEBUG: _showFullTournamentDetails called');
+    print('Tournament data: ${tournament.keys.join(', ')}');
+    
+    // Simple test dialog first
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Tournament Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Name: ${tournament['name'] ?? 'Unknown'}'),
+            Text('Organizer: ${tournament['organizer'] ?? 'Unknown'}'),
+            Text('Location: ${tournament['location'] ?? 'Unknown'}'),
+            Text('Entry Fee: ₹${tournament['entryFee'] ?? 0}'),
+            Text('Participants: ${tournament['currentParticipants'] ?? 0}/${tournament['maxParticipants'] ?? 0}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close'),
+          ),
+        ],
+      ),
+    );
+    return;
+    
+    // Original detailed implementation below (disabled for testing)
+    print('Showing tournament details for: ${tournament['name']}');
+    
+    String title = tournament['name'] ?? 'Unknown Tournament';
     String description = tournament['description'] ?? 'No description available';
     String organizer = tournament['organizer'] ?? 'Unknown Organizer';
     String location = tournament['location'] ?? 'Location not specified';
@@ -866,9 +1204,28 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
     String prizes = tournament['prizes'] ?? 'No prize information';
     String contactInfo = tournament['contactInfo'] ?? 'No contact information';
 
-    Timestamp startDate = tournament['startDate'] as Timestamp;
-    Timestamp endDate = tournament['endDate'] as Timestamp;
-    Timestamp regDeadline = tournament['registrationDeadline'] as Timestamp;
+    // Handle dates safely with null checks
+    String startDateStr = 'Not specified';
+    String endDateStr = 'Not specified';
+    String regDeadlineStr = 'Not specified';
+    
+    try {
+      if (tournament['startDate'] != null) {
+        Timestamp startDate = tournament['startDate'] as Timestamp;
+        startDateStr = _dateFormat.format(startDate.toDate());
+      }
+      if (tournament['endDate'] != null) {
+        Timestamp endDate = tournament['endDate'] as Timestamp;
+        endDateStr = _dateFormat.format(endDate.toDate());
+      }
+      if (tournament['registrationDeadline'] != null) {
+        Timestamp regDeadline = tournament['registrationDeadline'] as Timestamp;
+        regDeadlineStr = _dateFormat.format(regDeadline.toDate());
+      }
+    } catch (e) {
+      print('Error parsing tournament dates: $e');
+      // Use default values if there's an error
+    }
 
     showModalBottomSheet(
       context: context,
@@ -906,11 +1263,11 @@ class _DashboardContentPageState extends State<DashboardContentPage> {
               _buildDetailRow(Icons.people, 'Participants',
                   '$currentParticipants/$maxParticipants'),
               _buildDetailRow(
-                  Icons.calendar_today, 'Starts', _dateFormat.format(startDate.toDate())),
+                  Icons.calendar_today, 'Starts', startDateStr),
               _buildDetailRow(
-                  Icons.event, 'Ends', _dateFormat.format(endDate.toDate())),
+                  Icons.event, 'Ends', endDateStr),
               _buildDetailRow(Icons.alarm, 'Registration Deadline',
-                  _dateFormat.format(regDeadline.toDate())),
+                  regDeadlineStr),
               const SizedBox(height: 20),
               const Text(
                 'Rules:',

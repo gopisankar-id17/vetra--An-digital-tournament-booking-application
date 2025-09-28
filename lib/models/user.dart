@@ -105,6 +105,25 @@ class User {
     );
   }
 
+  // For demonstration purposes - sample organizer user
+  static User sampleOrganizer() {
+    return User(
+      id: '5',
+      name: 'Sports Events Co.',
+      email: 'organizer@sportsevents.com',
+      photoUrl:
+          'https://ui-avatars.com/api/?name=Sports+Events&background=3498db&color=fff',
+      isAdmin: false,
+      phone: '+1 555 ORG 1234',
+      address: '456 Organizer Boulevard, Event City',
+      bio:
+          'Professional tournament organizer with 10+ years of experience in hosting sports and gaming events.',
+      role: 'organizer',
+      registrationDate: DateTime.now().subtract(const Duration(days: 180)),
+      stats: {'tournaments': 25, 'wins': 0, 'bookings': 0, 'rating': 4.8},
+    );
+  }
+
   // Get color based on user role
   Color getRoleColor() {
     switch (role) {

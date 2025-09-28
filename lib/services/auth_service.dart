@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../models/admin_model.dart';
+import 'session_service.dart';
 
 class AuthService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -64,7 +65,8 @@ class AuthService {
 
       // If not found in Firestore, check in-memory admins
       for (AdminModel admin in _admins) {
-        if ((admin.email == emailOrPhone || admin.phoneNumber == emailOrPhone) &&
+        if ((admin.email == emailOrPhone ||
+                admin.phoneNumber == emailOrPhone) &&
             admin.password == password) {
           print('Admin found in in-memory data');
           return admin;
@@ -229,7 +231,9 @@ class AuthService {
 
       // Try to save to Firestore (if configured)
       try {
-        DocumentReference adminRef = _firestore.collection('admins').doc(adminId);
+        DocumentReference adminRef = _firestore
+            .collection('admins')
+            .doc(adminId);
         await adminRef.set(admin.toMap());
       } catch (firestoreError) {
         print('Firestore not configured, admin saved in memory only');
@@ -277,6 +281,48 @@ class AuthService {
     } catch (e) {
       print('Error checking email: $e');
       return false;
+    }
+  }
+
+  // Logout methods for session management
+  Future<void> logoutAdmin() async {
+    try {
+      await SessionService.clearAdminSession();
+      print('AuthService: Admin logged out successfully');
+    } catch (e) {
+      print('AuthService: Error logging out admin: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> logoutUser() async {
+    try {
+      await SessionService.clearUserSession();
+      print('AuthService: User logged out successfully');
+    } catch (e) {
+      print('AuthService: Error logging out user: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> logoutOrganizer() async {
+    try {
+      await SessionService.clearOrganizerSession();
+      print('AuthService: Organizer logged out successfully');
+    } catch (e) {
+      print('AuthService: Error logging out organizer: $e');
+      rethrow;
+    }
+  }
+
+  // Logout from all sessions
+  Future<void> logoutAll() async {
+    try {
+      await SessionService.clearAllSessions();
+      print('AuthService: All sessions cleared successfully');
+    } catch (e) {
+      print('AuthService: Error clearing all sessions: $e');
+      rethrow;
     }
   }
 }
