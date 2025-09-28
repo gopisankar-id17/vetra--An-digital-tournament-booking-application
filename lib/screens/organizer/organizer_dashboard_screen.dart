@@ -139,7 +139,7 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex > 4 ? 0 : _selectedIndex,
+        currentIndex: _selectedIndex > 3 ? 0 : _selectedIndex,
         selectedItemColor: AppTheme.primaryColor,
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
@@ -159,11 +159,7 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
             label: 'My Tournaments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Participants',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
+            icon: Icon(Icons.notifications_active),
             label: 'Notifications',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
@@ -189,10 +185,8 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
       case 1:
         return 'My Tournaments';
       case 2:
-        return 'Participant Management';
-      case 3:
         return 'Notifications';
-      case 4:
+      case 3:
         return 'Profile';
       default:
         return 'Organizer Dashboard';
@@ -206,10 +200,8 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
       case 1:
         return _buildTournamentsContent();
       case 2:
-        return _buildParticipantsContent();
-      case 3:
         return _buildNotificationsContent();
-      case 4:
+      case 3:
         return _buildProfileContent();
       default:
         return _buildDashboardContent();
@@ -473,12 +465,275 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
   }
 
   Widget _buildNotificationsContent() {
-    return const Center(
-      child: Text(
-        'Notifications for organizers',
-        style: TextStyle(fontSize: 18),
+    // Mock notifications for demonstration
+    final List<Map<String, dynamic>> notifications = [
+      {
+        'id': 'n1',
+        'title': 'New Team Registration',
+        'message': 'Team "Seniors" has registered for Chess tournament',
+        'timestamp': DateTime.now().subtract(const Duration(hours: 2)),
+        'type': 'booking',
+        'isRead': false,
+      },
+      {
+        'id': 'n2',
+        'title': 'Tournament Starting Soon',
+        'message':
+            'Your tournament "Summer Chess Championship" will begin tomorrow',
+        'timestamp': DateTime.now().subtract(const Duration(hours: 5)),
+        'type': 'reminder',
+        'isRead': true,
+      },
+      {
+        'id': 'n3',
+        'title': 'Payment Received',
+        'message':
+            'Payment of ₹200 received from Team "Juniors" for Chess tournament',
+        'timestamp': DateTime.now().subtract(const Duration(days: 1)),
+        'type': 'payment',
+        'isRead': false,
+      },
+      {
+        'id': 'n4',
+        'title': 'Score Update',
+        'message':
+            'Team "Golden Stars" vs "Blue Thunder" match result updated: 3-1',
+        'timestamp': DateTime.now().subtract(const Duration(days: 2)),
+        'type': 'result',
+        'isRead': true,
+      },
+      {
+        'id': 'n5',
+        'title': 'Venue Change',
+        'message':
+            'Venue for "Football Tournament" has been changed to City Stadium',
+        'timestamp': DateTime.now().subtract(const Duration(days: 3)),
+        'type': 'announcement',
+        'isRead': false,
+      },
+    ];
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Badge(
+                backgroundColor: AppTheme.primaryColor,
+                label: Text(
+                  '${notifications.where((n) => n['isRead'] == false).length}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  // Refresh notifications
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: notifications.isEmpty
+              ? _buildEmptyNotifications()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(0),
+                  itemCount: notifications.length,
+                  itemBuilder: (context, index) {
+                    final notification = notifications[index];
+                    return _buildNotificationCard(notification);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyNotifications() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.notifications_off, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            'No Notifications Yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You\'ll see notifications about your tournaments here',
+            style: TextStyle(color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildNotificationCard(Map<String, dynamic> notification) {
+    final title = notification['title'] as String;
+    final message = notification['message'] as String;
+    final timestamp = notification['timestamp'] as DateTime;
+    final type = notification['type'] as String;
+    final isRead = notification['isRead'] as bool;
+
+    // Set icon and color based on notification type
+    IconData icon;
+    Color color;
+
+    switch (type) {
+      case 'booking':
+        icon = Icons.person_add;
+        color = Colors.green;
+        break;
+      case 'reminder':
+        icon = Icons.alarm;
+        color = Colors.orange;
+        break;
+      case 'payment':
+        icon = Icons.payment;
+        color = Colors.blue;
+        break;
+      case 'result':
+        icon = Icons.scoreboard;
+        color = Colors.purple;
+        break;
+      case 'announcement':
+        icon = Icons.campaign;
+        color = Colors.red;
+        break;
+      default:
+        icon = Icons.notifications;
+        color = AppTheme.primaryColor;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: isRead
+            ? null
+            : Border.all(color: color.withOpacity(0.5), width: 1.5),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            // Handle notification tap
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Notification: $title')));
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontWeight: isRead
+                                    ? FontWeight.normal
+                                    : FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          if (!isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: color,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        message,
+                        style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _getTimeAgo(timestamp),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getTimeAgo(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
   }
 
   Widget _buildProfileContent() {

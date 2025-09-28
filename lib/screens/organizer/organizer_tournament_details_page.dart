@@ -7,6 +7,15 @@ import '../../utils/app_theme.dart';
 import '../../services/organizer_service.dart';
 import '../../services/session_service.dart';
 import '../../services/participant_service.dart';
+import '../../services/booking_service.dart';
+
+// Extension to capitalize first letter
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return '${this[0].toUpperCase()}${substring(1)}';
+  }
+}
 
 class OrganizerTournamentDetailsPage extends StatefulWidget {
   final Tournament tournament;
@@ -29,12 +38,14 @@ class _OrganizerTournamentDetailsPageState
   late TabController _tabController;
   late Tournament _tournament;
   final ParticipantService _participantService = ParticipantService();
+  final BookingService _bookingService = BookingService();
   bool _isLoading = false;
 
   // Mock data - replace with actual data from your services
   List<Participant> participants = [];
   List<Match> matches = [];
   List<AppNotification.Notification> notifications = [];
+  List<Map<String, dynamic>> teamBookings = [];
 
   @override
   void initState() {
@@ -82,12 +93,22 @@ class _OrganizerTournamentDetailsPageState
   }
 
   void _loadMockData() async {
+    setState(() => _isLoading = true);
+
     try {
       // Load real participants data from database
       participants = await _participantService.getParticipants(_tournament.id);
+
+      // Load team bookings data
+      teamBookings = await _bookingService.getTournamentTeams(_tournament.id);
+      print('Loaded ${teamBookings.length} team bookings');
     } catch (e) {
       // Fallback to empty list if error
       participants = [];
+      teamBookings = [];
+      print('Error loading data: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
 
     // Mock matches data - you can replace this with real match service later
@@ -202,7 +223,7 @@ class _OrganizerTournamentDetailsPageState
           unselectedLabelColor: Colors.grey,
           tabs: const [
             Tab(text: 'Overview'),
-            Tab(text: 'Participants'),
+            Tab(text: 'Registration'),
             Tab(text: 'Fixtures'),
             Tab(text: 'Scores'),
             Tab(text: 'Notifications'),
@@ -697,27 +718,197 @@ class _OrganizerTournamentDetailsPageState
             children: [
               Expanded(
                 child: Text(
-                  'Participants (${participants.length}/${_tournament.maxParticipants})',
+                  'Teams Management (${teamBookings.length}/${_tournament.maxParticipants})',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: AppTheme.primaryColor),
+                onPressed: _loadMockData,
+                tooltip: 'Refresh Teams List',
+              ),
             ],
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: participants.length,
-            itemBuilder: (context, index) {
-              final participant = participants[index];
-              return _buildParticipantCard(participant);
-            },
-          ),
-        ),
+        Expanded(child: _buildTeamsList()),
       ],
+    );
+  }
+
+  Widget _buildTeamsList() {
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : teamBookings.isEmpty
+        ? const Center(child: Text('No teams registered yet'))
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: teamBookings.length,
+            itemBuilder: (context, index) {
+              final booking = teamBookings[index];
+              return _buildTeamBookingCard(booking);
+            },
+          );
+  }
+
+  Widget _buildTeamBookingCard(Map<String, dynamic> booking) {
+    final teamName = booking['teamName'] ?? 'No Team Name';
+    final captainName = booking['captainName'] ?? 'Unknown';
+    final email = booking['email'] ?? '';
+    final phoneNumber =
+        booking['phoneNumber'] ?? ''; // We'll keep this for future use
+    final playerCount = booking['playerCount']?.toString() ?? '1';
+    final status = booking['status'] ?? 'pending';
+    final paymentStatus = booking['paymentStatus'] ?? 'pending';
+
+    // Define colors based on status
+    Color statusColor = Colors.orange;
+    if (status == 'approved')
+      statusColor = Colors.green;
+    else if (status == 'rejected')
+      statusColor = Colors.red;
+
+    Color paymentStatusColor = Colors.orange;
+    if (paymentStatus == 'paid')
+      paymentStatusColor = Colors.green;
+    else if (paymentStatus == 'refunded')
+      paymentStatusColor = Colors.grey;
+    else if (paymentStatus == 'failed')
+      paymentStatusColor = Colors.red;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 25,
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                  child: Text(
+                    teamName.isNotEmpty ? teamName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        teamName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Captain: $captainName',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Phone: $phoneNumber',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _buildStatusChip('Status', status, statusColor),
+                const SizedBox(width: 8),
+                _buildStatusChip('Payment', paymentStatus, paymentStatusColor),
+                const SizedBox(width: 8),
+                _buildInfoChip(Icons.people, '$playerCount players'),
+                const Spacer(),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String label, String status, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+          ),
+          Text(
+            status.capitalize(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.grey.shade700),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1083,9 +1274,45 @@ class _OrganizerTournamentDetailsPageState
   }
 
   Widget _buildScoresTab() {
-    final completedMatches = matches
-        .where((m) => m.status == MatchStatus.completed)
-        .toList();
+    // Mock team scores data - in a real app this would come from your database
+    final List<Map<String, dynamic>> teamScores = [
+      {
+        'teamName': teamBookings.isNotEmpty
+            ? teamBookings[0]['teamName']
+            : 'Seniors',
+        'matchesPlayed': 3,
+        'matchesWon': 2,
+        'matchesLost': 1,
+        'points': 6,
+        'status': 'leading',
+      },
+      {
+        'teamName': teamBookings.length > 1
+            ? teamBookings[1]['teamName']
+            : 'Juniors',
+        'matchesPlayed': 3,
+        'matchesWon': 1,
+        'matchesLost': 2,
+        'points': 3,
+        'status': 'trailing',
+      },
+      {
+        'teamName': 'Golden Stars',
+        'matchesPlayed': 2,
+        'matchesWon': 1,
+        'matchesLost': 1,
+        'points': 3,
+        'status': 'middle',
+      },
+      {
+        'teamName': 'Blue Thunder',
+        'matchesPlayed': 2,
+        'matchesWon': 0,
+        'matchesLost': 2,
+        'points': 0,
+        'status': 'bottom',
+      },
+    ];
 
     return Column(
       children: [
@@ -1099,14 +1326,14 @@ class _OrganizerTournamentDetailsPageState
             children: [
               const Expanded(
                 child: Text(
-                  'Match Results & Scores',
+                  'Team Scores & Rankings',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: _addScore,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Score'),
+                label: const Text('Update Scores'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
@@ -1115,15 +1342,65 @@ class _OrganizerTournamentDetailsPageState
             ],
           ),
         ),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          decoration: BoxDecoration(color: Colors.grey.shade100),
+          child: const Row(
+            children: [
+              SizedBox(
+                width: 40,
+                child: Text(
+                  'Rank',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Team',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(
+                width: 50,
+                child: Text(
+                  'Played',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  'Won',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  'Lost',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  'Points',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
         Expanded(
-          child: completedMatches.isEmpty
+          child: teamScores.isEmpty
               ? _buildEmptyScores()
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: completedMatches.length,
+                  padding: const EdgeInsets.all(0),
+                  itemCount: teamScores.length,
                   itemBuilder: (context, index) {
-                    final match = completedMatches[index];
-                    return _buildScoreCard(match);
+                    final score = teamScores[index];
+                    return _buildTeamScoreRow(score, index + 1);
                   },
                 ),
         ),
@@ -1156,7 +1433,121 @@ class _OrganizerTournamentDetailsPageState
     );
   }
 
-  Widget _buildScoreCard(Match match) {
+  Widget _buildTeamScoreRow(Map<String, dynamic> score, int rank) {
+    final teamName = score['teamName'] ?? 'Unknown Team';
+    final matchesPlayed = score['matchesPlayed'] ?? 0;
+    final matchesWon = score['matchesWon'] ?? 0;
+    final matchesLost = score['matchesLost'] ?? 0;
+    final points = score['points'] ?? 0;
+
+    Color rankColor;
+    if (rank == 1) {
+      rankColor = Colors.amber;
+    } else if (rank == 2) {
+      rankColor = Colors.grey.shade400;
+    } else if (rank == 3) {
+      rankColor = Colors.brown.shade300;
+    } else {
+      rankColor = Colors.grey.shade700;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: rankColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+                border: Border.all(color: rankColor, width: rank <= 3 ? 2 : 1),
+              ),
+              child: Center(
+                child: Text(
+                  rank.toString(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: rankColor,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 15,
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                  child: Text(
+                    teamName.isNotEmpty ? teamName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  teamName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 50,
+            child: Text(matchesPlayed.toString(), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text(
+              matchesWon.toString(),
+              style: const TextStyle(color: Colors.green),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text(
+              matchesLost.toString(),
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text(
+              points.toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Team vs team match card for future implementation
+  Widget _buildTeamMatchCard(
+    Map<String, dynamic> team1,
+    Map<String, dynamic> team2,
+    int score1,
+    int score2,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -1176,7 +1567,7 @@ class _OrganizerTournamentDetailsPageState
           Row(
             children: [
               Text(
-                'Round ${match.round} - ${_formatDate(match.scheduledTime!)}',
+                'Match: ${team1['teamName']} vs ${team2['teamName']}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -1194,7 +1585,7 @@ class _OrganizerTournamentDetailsPageState
                 child: Column(
                   children: [
                     Text(
-                      match.player1Name ?? 'Player 1',
+                      team1['teamName'] ?? 'Team 1',
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -1207,9 +1598,9 @@ class _OrganizerTournamentDetailsPageState
                         color: Colors.green.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(
+                      child: Text(
+                        score1.toString(),
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.green,
@@ -1234,7 +1625,7 @@ class _OrganizerTournamentDetailsPageState
                 child: Column(
                   children: [
                     Text(
-                      match.player2Name ?? 'Player 2',
+                      team2['teamName'] ?? 'Team 2',
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -1247,12 +1638,12 @@ class _OrganizerTournamentDetailsPageState
                         color: Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        '1',
+                      child: Text(
+                        score2.toString(),
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          color: score2 > score1 ? Colors.green : Colors.grey,
                         ),
                       ),
                     ),
