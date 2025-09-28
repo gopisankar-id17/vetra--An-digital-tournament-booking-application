@@ -49,19 +49,19 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-      // --- ✅ UPDATED THIS LIST ---
-      final List<Widget> pages = [
-        DashboardContentPage(onSportSelected: _navigateToSearchWithSportFilter),
-        SearchPage(initialSportFilter: _initialSportFilter),
-        const BookingsPage(), // Replaced placeholder with the actual page
-        const TournamentVideosPage(),
-        const Center(
-          child: Text(
-            'My Profile - Coming Soon!',
-            style: TextStyle(fontSize: 22),
-          ),
+    // --- ✅ UPDATED THIS LIST ---
+    final List<Widget> pages = [
+      DashboardContentPage(onSportSelected: _navigateToSearchWithSportFilter),
+      SearchPage(initialSportFilter: _initialSportFilter),
+      const BookingsPage(), // Replaced placeholder with the actual page
+      const TournamentVideosPage(),
+      const Center(
+        child: Text(
+          'My Profile - Coming Soon!',
+          style: TextStyle(fontSize: 22),
         ),
-      ];
+      ),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -119,128 +119,125 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
   }
 
   Drawer _buildDrawer() {
-      return Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            FutureBuilder<Map<String, String?>>(
-              future: SessionService.getUserSession(),
-              builder: (context, snapshot) {
-                String displayName = 'User';
-                if (snapshot.hasData && snapshot.data != null) {
-                  displayName =
-                      snapshot.data!['name'] ??
-                      snapshot.data!['phone']?.replaceAll('+91', '') ??
-                      'User';
-                }
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          FutureBuilder<Map<String, String?>>(
+            future: SessionService.getUserSession(),
+            builder: (context, snapshot) {
+              String displayName = 'User';
+              if (snapshot.hasData && snapshot.data != null) {
+                displayName =
+                    snapshot.data!['name'] ??
+                    snapshot.data!['phone']?.replaceAll('+91', '') ??
+                    'User';
+              }
 
-                return DrawerHeader(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF6f42c1), Color(0xFF8a63d2)],
+              return DrawerHeader(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF6f42c1), Color(0xFF8a63d2)],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 35,
+                        color: Color(0xFF6f42c1),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 35,
-                          color: Color(0xFF6f42c1),
-                        ),
+                    const SizedBox(height: 10),
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Tournament Participant',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard, color: Color(0xFF6f42c1)),
-              title: const Text('Dashboard'),
-              onTap: () {
-                Navigator.pop(context);
-                _onBottomNavTap(0);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.search, color: Color(0xFF6f42c1)),
-              title: const Text('Find Tournaments'),
-              onTap: () {
-                Navigator.pop(context);
-                _onBottomNavTap(1);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.list_alt, color: Color(0xFF6f42c1)),
-              title: const Text('My Bookings'),
-              onTap: () {
-                Navigator.pop(context);
-                _onBottomNavTap(2);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.video_library,
-                color: Color(0xFF6f42c1),
-              ),
-              title: const Text('Tournament Videos'),
-              onTap: () {
-                Navigator.pop(context);
-                _onBottomNavTap(3);
-              },
-            ),
-            // --- ✅ UPDATED PROFILE NAVIGATION ---
-            ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
-              title: const Text('My Profile'),
-              onTap: () {
-                Navigator.pop(context);
-                _onBottomNavTap(4); // Corrected index to 4
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info, color: Color(0xFF6f42c1)),
-              title: const Text('About Us'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AboutUsPage()),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout'),
-              onTap: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LandingPage()),
-                  (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
-      );
-    }
+                    ),
+                    const Text(
+                      'Tournament Participant',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard, color: Color(0xFF6f42c1)),
+            title: const Text('Dashboard'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(0);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.search, color: Color(0xFF6f42c1)),
+            title: const Text('Find Tournaments'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(1);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt, color: Color(0xFF6f42c1)),
+            title: const Text('My Bookings'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(2);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.video_library, color: Color(0xFF6f42c1)),
+            title: const Text('Tournament Videos'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(3);
+            },
+          ),
+          // --- ✅ UPDATED PROFILE NAVIGATION ---
+          ListTile(
+            leading: const Icon(Icons.person, color: Color(0xFF6f42c1)),
+            title: const Text('My Profile'),
+            onTap: () {
+              Navigator.pop(context);
+              _onBottomNavTap(4); // Corrected index to 4
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info, color: Color(0xFF6f42c1)),
+            title: const Text('About Us'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AboutUsPage()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout'),
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LandingPage()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
+}
