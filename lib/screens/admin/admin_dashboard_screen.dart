@@ -149,46 +149,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         },
       ),
       body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        // Ensure the current index for bottom nav is mapped correctly from _selectedIndex
-        currentIndex: _getBottomNavIndex(_selectedIndex),
-        selectedItemColor: AppTheme.primaryColor,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        elevation: 10,
-        onTap: _onBottomNavTap, // Use the new handler for bottom nav taps
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events),
-            label: 'Tournaments',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.approval),
-            label: 'Requests',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          // REMOVED 'Videos' from bottom navigation bar
-        ],
+bottomNavigationBar: BottomNavigationBar(
+  type: BottomNavigationBarType.fixed,
+  currentIndex: _getBottomNavIndex(_selectedIndex),
+  selectedItemColor: AppTheme.primaryColor,
+  unselectedItemColor: Colors.grey,
+  backgroundColor: Colors.white,
+  elevation: 10,
+  onTap: _onBottomNavTap,
+  iconSize: 32.0, // Increased icon size as per your previous request
+  selectedFontSize: 0, // Remove label height to reduce gap
+  unselectedFontSize: 0, // Remove label height to reduce gap
+  items: const [
+    BottomNavigationBarItem(
+      icon: Center(
+        child: Icon(Icons.dashboard),
       ),
-      floatingActionButton: _selectedIndex == 0
-          ? ProfessionalFloatingActionButton(
-              onPressed: () {
-                _showCreateTournamentDialog(context);
-              },
-              tooltip: 'Create New Tournament',
-              icon: Icons.sports_esports,
-              label: 'New Tournament',
-            )
-          : null,
+      label: '', // Empty label
+    ),
+    BottomNavigationBarItem(
+      icon: Center(
+        child: Icon(Icons.emoji_events),
+      ),
+      label: '', // Empty label
+    ),
+    BottomNavigationBarItem(
+      icon: Center(
+        child: Icon(Icons.approval),
+      ),
+      label: '', // Empty label
+    ),
+    BottomNavigationBarItem(
+      icon: Center(
+        child: Icon(Icons.notifications),
+      ),
+      label: '', // Empty label
+    ),
+    BottomNavigationBarItem(
+      icon: Center(
+        child: Icon(Icons.person),
+      ),
+      label: '', // Empty label
+    ),
+  ],
+),
+      
     );
   }
 

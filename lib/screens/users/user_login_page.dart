@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../auth_service.dart';
+
 class UserLoginPage extends StatefulWidget {
   const UserLoginPage({Key? key}) : super(key: key);
 
@@ -95,198 +96,186 @@ class _UserLoginPageState extends State<UserLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sports.jpg'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black54, // Dark overlay for text readability
-              BlendMode.darken,
-            ),
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6f42c1),
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 64,
-                      color: Colors.white,
-                    ),
+      backgroundColor: Colors.white, // Changed to white background
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6f42c1),
+                    borderRadius: BorderRadius.circular(60),
                   ),
-                  const SizedBox(height: 32),
+                  child: const Icon(
+                    Icons.person,
+                    size: 64,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 32),
 
-                  // Title
-                  Text(
-                    'User Login',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Welcome back! Sign in to continue',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 32),
+                // Title
+                Text(
+                  'User Login',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black, // Changed to black for better contrast
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Welcome back! Sign in to continue',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[700], // Changed to grey for better readability
+                      ),
+                ),
+                const SizedBox(height: 32),
 
-                  // Login Form
-                  Card(
-                    elevation: 8,
-                    shadowColor: Colors.black26,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            // Mobile Number Field
-                            TextFormField(
-                              controller: _mobileController,
-                              focusNode: _mobileFocusNode,
-                              keyboardType: TextInputType.phone,
-                              decoration: InputDecoration(
-                                labelText: 'Mobile Number',
-                                hintText: '+91 12345 67890',
-                                prefixIcon: const Icon(Icons.phone),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF6f42c1),
-                                  ),
+                // Login Form
+                Card(
+                  elevation: 8,
+                  shadowColor: Colors.black26,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          // Mobile Number Field
+                          TextFormField(
+                            controller: _mobileController,
+                            focusNode: _mobileFocusNode,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              labelText: 'Mobile Number',
+                              hintText: '+91 12345 67890',
+                              prefixIcon: const Icon(Icons.phone),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF6f42c1),
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.length < 13) {
-                                  return 'Please enter a valid 10-digit number';
-                                }
-                                return null;
-                              },
                             ),
-                            const SizedBox(height: 20),
+                            validator: (value) {
+                              if (value == null || value.length < 13) {
+                                return 'Please enter a valid 10-digit number';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
 
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                hintText: 'Enter your password',
-                                prefixIcon: const Icon(Icons.lock),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF6f42c1),
-                                  ),
+                          // Password Field
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              hintText: 'Enter your password',
+                              prefixIcon: const Icon(Icons.lock),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF6f42c1),
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
-                                }
-                                return null;
-                              },
                             ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
 
-                            const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                            // Login Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : () => _handleUserLogin(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6f42c1),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 2,
+                          // Login Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : () => _handleUserLogin(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6f42c1),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Login',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
+                                elevation: 2,
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
                                         ),
                                       ),
-                              ),
+                                    )
+                                  : const Text(
+                                      'Login',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-                  // Bottom buttons
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/user-signup');
-                    },
-                    child: const Text(
-                      'Don\'t have an account? Sign up',
-                      style: TextStyle(color: Colors.white),
+                // Bottom buttons
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/user-signup');
+                  },
+                  child: const Text(
+                    'Don\'t have an account? Sign up',
+                    style: TextStyle(
+                      color: Color(0xFF6f42c1), // Changed to match theme color
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      'Back to Home',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Back to Home',
+                    style: TextStyle(
+                      color: Color(0xFF6f42c1), // Changed to match theme color
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
